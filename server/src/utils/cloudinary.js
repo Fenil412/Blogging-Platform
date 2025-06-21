@@ -1,22 +1,22 @@
-import {v2 as cloudinary} from "cloudinary"
+import { v2 as cloudinary } from "cloudinary"
 import fs from "fs"
+import path from "path";
 
-
-cloudinary.config({ 
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
-  api_key: process.env.CLOUDINARY_API_KEY, 
-  api_secret: process.env.CLOUDINARY_API_SECRET 
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 const uploadOnCloudinary = async (localFilePath) => {
     try {
         if (!localFilePath) return null
-        //upload the file on cloudinary
+
         const response = await cloudinary.uploader.upload(localFilePath, {
-            resource_type: "auto"
+            resource_type: "auto",
+            folder: "BloggingPlatform"
         })
-        // file has been uploaded successfull
-        //console.log("file is uploaded on cloudinary ", response.url);
+        
         fs.unlinkSync(localFilePath)
         return response;
 
@@ -26,6 +26,17 @@ const uploadOnCloudinary = async (localFilePath) => {
     }
 }
 
+const getPublicIdFromUrl = (url) => {
+    try {
+        const parts = url.split("/");
+        const fileWithExtension = parts.pop(); // e4u5dujuq85ryb9ip0ru.jpg
+        const publicId = path.parse(fileWithExtension).name; // remove .jpg
+        return publicId;
+    } catch (error) {
+        console.error("Error extracting public ID from URL:", error);
+        return null;
+    }
+};
 
 
-export {uploadOnCloudinary}
+export { uploadOnCloudinary, getPublicIdFromUrl };
