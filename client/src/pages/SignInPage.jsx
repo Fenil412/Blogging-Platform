@@ -1,131 +1,218 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+"use client"
 
-const SignInPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
+import { useState } from "react"
+import { useAuth } from "../contexts/AuthContext"
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+export default function LoginForm() {
+  const { login, verifyOtp, loading, requiresOtp } = useAuth()
+  const [formData, setFormData] = useState({
+    email: "",
+    username: "",
+    password: "",
+  })
+  const [otp, setOtp] = useState("")
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
+  const [loginMethod, setLoginMethod] = useState("email")
 
-    if (!email || !password) {
-      return toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please fill in all fields.",
-      });
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+    setError("")
+  }
+
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    setError("")
+    setSuccess("")
+
+    const loginData = {
+      password: formData.password,
     }
 
-    setIsLoading(true);
-
-    const result = await login({ email, password });
-
-    setIsLoading(false);
-
-    if (result.success) return; // not expected in OTP flow
-
-    if (result.requiresOtp) {
-      toast({
-        title: "OTP Sent",
-        description: "Check your email for the OTP.",
-      });
-      navigate("/verify-otp");
+    if (loginMethod === "email") {
+      loginData.email = formData.email
     } else {
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: result.message,
-      });
+      loginData.username = formData.username
     }
-  };
+
+    const result = await login(loginData)
+
+    if (result.success && result.requiresOtp) {
+      setSuccess(result.message)
+    } else if (!result.success) {
+      setError(result.message)
+    }
+  }
+
+  const handleOtpVerification = async (e) => {
+    e.preventDefault()
+    setError("")
+    const result = await verifyOtp(otp)
+    if (result.success) {
+      setSuccess(result.message)
+    } else {
+      setError(result.message)
+    }
+  }
+
+  if (requiresOtp) {
+    return (
+      <div style={styles.card}>
+        <h2>Verify OTP</h2>
+        <p>Enter the 6-digit code sent to your email</p>
+        <form onSubmit={handleOtpVerification} style={styles.form}>
+          {error && <p style={styles.error}>{error}</p>}
+          {success && <p style={styles.success}>{success}</p>}
+          <div>
+            <label htmlFor="otp">OTP Code</label>
+            <input
+              id="otp"
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              maxLength={6}
+              required
+              style={styles.input}
+            />
+          </div>
+          <button type="submit" disabled={loading} style={styles.button}>
+            {loading ? "Verifying..." : "Verify OTP"}
+          </button>
+        </form>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <main className="flex-1 flex items-center justify-center py-12">
-        <div className="w-full max-w-md px-6 py-8 border rounded-lg shadow-md bg-white">
-          <header className="space-y-1 mb-6">
-            <h1 className="text-2xl font-bold text-center">Sign In</h1>
-            <p className="text-center text-gray-600">
-              Enter your credentials to access your account
-            </p>
-          </header>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium mb-1"
-              >
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`w-full px-4 py-2 text-white rounded ${
-                isLoading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
-              }`}
-            >
-              {isLoading ? "Signing in..." : "Sign In"}
-            </button>
-          </form>
-
-          <footer className="mt-6 text-center text-sm text-gray-600">
-            Don’t have an account?{" "}
-            <Link to="/signup" className="text-blue-600 hover:underline">
-              Sign up
-            </Link>
-          </footer>
+    <div style={styles.card}>
+      <h2>Sign In</h2>
+      <p>Enter your credentials to access your account</p>
+      <form onSubmit={handleLogin} style={styles.form}>
+        {error && <p style={styles.error}>{error}</p>}
+        {success && <p style={styles.success}>{success}</p>}
+        <div style={styles.toggle}>
+          <button
+            type="button"
+            onClick={() => setLoginMethod("email")}
+            style={{
+              ...styles.toggleButton,
+              backgroundColor: loginMethod === "email" ? "#ccc" : "#f9f9f9",
+            }}
+          >
+            Email
+          </button>
+          <button
+            type="button"
+            onClick={() => setLoginMethod("username")}
+            style={{
+              ...styles.toggleButton,
+              backgroundColor: loginMethod === "username" ? "#ccc" : "#f9f9f9",
+            }}
+          >
+            Username
+          </button>
         </div>
-      </main>
+        {loginMethod === "email" ? (
+          <div>
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+              style={styles.input}
+            />
+          </div>
+        ) : (
+          <div>
+            <label htmlFor="username">Username</label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              value={formData.username}
+              onChange={handleInputChange}
+              required
+              style={styles.input}
+            />
+          </div>
+        )}
+        <div>
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleInputChange}
+            required
+            style={styles.input}
+          />
+        </div>
+        <button type="submit" disabled={loading} style={styles.button}>
+          {loading ? "Signing In..." : "Sign In"}
+        </button>
+      </form>
     </div>
-  );
-};
+  )
+}
 
-export default SignInPage;
+const styles = {
+  card: {
+    maxWidth: "400px",
+    margin: "2rem auto",
+    padding: "2rem",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    boxShadow: "0 0 8px rgba(0,0,0,0.05)",
+    background: "#fff",
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem",
+  },
+  input: {
+    width: "100%",
+    padding: "0.5rem",
+    fontSize: "1rem",
+    border: "1px solid #ccc",
+    borderRadius: "4px",
+  },
+  button: {
+    padding: "0.6rem",
+    fontSize: "1rem",
+    borderRadius: "4px",
+    backgroundColor: "#007bff",
+    color: "#fff",
+    border: "none",
+    cursor: "pointer",
+  },
+  toggle: {
+    display: "flex",
+    gap: "0.5rem",
+    marginBottom: "1rem",
+  },
+  toggleButton: {
+    flex: 1,
+    padding: "0.5rem",
+    border: "1px solid #ccc",
+    borderRadius: "4px",
+    cursor: "pointer",
+    background: "#f9f9f9",
+  },
+  error: {
+    color: "red",
+    fontSize: "0.9rem",
+  },
+  success: {
+    color: "green",
+    fontSize: "0.9rem",
+  },
+}

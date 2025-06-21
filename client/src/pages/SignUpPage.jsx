@@ -1,238 +1,252 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react"
+import { useAuth } from "../contexts/AuthContext"
 
-const SignUpPage = () => {
+export default function SignUpPage() {
+  const { register, loading } = useAuth()
   const [formData, setFormData] = useState({
-    username: "",
+    fullName: "",
     email: "",
+    username: "",
     password: "",
-    confirmPassword: "",
-    role: "",
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { register } = useAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
+    avatar: null,
+    coverImage: null,
+  })
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
+  const [avatarPreview, setAvatarPreview] = useState(null)
+  const [coverPreview, setCoverPreview] = useState(null)
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }));
-  };
+    }))
+    setError("")
+  }
+
+  const handleFileChange = (e, type) => {
+    const file = e.target.files[0]
+    if (file) {
+      setFormData((prev) => ({
+        ...prev,
+        [type]: file,
+      }))
+
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        if (type === "avatar") {
+          setAvatarPreview(e.target.result)
+        } else {
+          setCoverPreview(e.target.result)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log("Registration form submitted with:", formData);
+    e.preventDefault()
+    setError("")
+    setSuccess("")
 
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Passwords do not match.",
-      });
-      return;
+    if (!formData.avatar) {
+      setError("Avatar image is required")
+      return
     }
 
-    if (formData.password.length < 6) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Password must be at least 6 characters long.",
-      });
-      return;
+    const result = await register(formData)
+
+    if (result.success) {
+      setSuccess(result.message)
+      setFormData({
+        fullName: "",
+        email: "",
+        username: "",
+        password: "",
+        avatar: null,
+        coverImage: null,
+      })
+      setAvatarPreview(null)
+      setCoverPreview(null)
+    } else {
+      setError(result.message)
     }
-
-    setIsLoading(true);
-
-    try {
-      const { confirmPassword, ...userData } = formData;
-      console.log("Sending registration data:", userData);
-
-      const result = await register(userData);
-      console.log("Registration result:", result);
-
-      if (result.success) {
-        toast({
-          title: "Success",
-          description:
-            result.message || "Account created successfully. Please sign in.",
-        });
-        navigate("/signin");
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: result.message,
-        });
-      }
-    } catch (error) {
-      console.error("Registration error:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <main className="flex-1 flex items-center justify-center py-12">
-        <div className="w-full max-w-md px-6 py-8 border rounded-lg shadow-md bg-white">
-          <header className="space-y-1 mb-6">
-            <h1 className="text-2xl font-bold text-center">
-              Create an account
-            </h1>
-            <p className="text-center text-gray-600">
-              Enter your information to create an account
-            </p>
-          </header>
+    <div style={styles.card}>
+      <h2>Create Account</h2>
+      <p style={styles.description}>Fill in your details to create a new account</p>
+      <form onSubmit={handleSubmit} style={styles.form}>
+        {error && <p style={styles.error}>{error}</p>}
+        {success && <p style={styles.success}>{success}</p>}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <label htmlFor="username" className="block text-sm font-medium">
-                Username
-              </label>
-              <input
-                id="username"
-                name="username"
-                placeholder="johndoe"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                minLength={3}
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label htmlFor="email" className="block text-sm font-medium">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="name@example.com"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label htmlFor="password" className="block text-sm font-medium">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  minLength={6}
-                  className="w-full px-3 py-2 border rounded pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-              <p className="text-xs text-gray-500">
-                Password must be at least 6 characters long
-              </p>
-            </div>
-
-            <div className="space-y-1">
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium"
-              >
-                Confirm Password
-              </label>
-              <div className="relative">
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border rounded pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label htmlFor="role" className="block text-sm font-medium">
-                Role
-              </label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`w-full px-4 py-2 text-white rounded ${
-                isLoading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
-              }`}
-            >
-              {isLoading ? "Creating account..." : "Create Account"}
-            </button>
-          </form>
-
-          <footer className="mt-6 text-center text-sm text-gray-600">
-            Already have an account?{" "}
-            <Link to="/signin" className="text-blue-600 hover:underline">
-              Sign in
-            </Link>
-          </footer>
+        <div>
+          <label htmlFor="fullName">Full Name</label>
+          <input
+            id="fullName"
+            name="fullName"
+            type="text"
+            placeholder="Enter your full name"
+            value={formData.fullName}
+            onChange={handleInputChange}
+            required
+            style={styles.input}
+          />
         </div>
-      </main>
-    </div>
-  );
-};
 
-export default SignUpPage;
+        <div>
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="Enter your email"
+            value={formData.email}
+            onChange={handleInputChange}
+            required
+            style={styles.input}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="username">Username</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            placeholder="Choose a username"
+            value={formData.username}
+            onChange={handleInputChange}
+            required
+            style={styles.input}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            placeholder="Create a password"
+            value={formData.password}
+            onChange={handleInputChange}
+            required
+            style={styles.input}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="avatar">Avatar Image *</label>
+          <input
+            id="avatar"
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleFileChange(e, "avatar")}
+            required
+            style={styles.input}
+          />
+          {avatarPreview && (
+            <div style={styles.avatarPreviewContainer}>
+              <img src={avatarPreview} alt="Avatar preview" style={styles.avatarImage} />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="coverImage">Cover Image (Optional)</label>
+          <input
+            id="coverImage"
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleFileChange(e, "coverImage")}
+            style={styles.input}
+          />
+          {coverPreview && (
+            <div style={styles.coverPreviewContainer}>
+              <img src={coverPreview} alt="Cover preview" style={styles.coverImage} />
+            </div>
+          )}
+        </div>
+
+        <button type="submit" disabled={loading} style={styles.button}>
+          {loading ? "Creating..." : "Create Account"}
+        </button>
+      </form>
+    </div>
+  )
+}
+
+const styles = {
+  card: {
+    maxWidth: "500px",
+    margin: "2rem auto",
+    padding: "2rem",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    boxShadow: "0 0 8px rgba(0,0,0,0.05)",
+    background: "#fff",
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem",
+  },
+  input: {
+    width: "100%",
+    padding: "0.5rem",
+    fontSize: "1rem",
+    border: "1px solid #ccc",
+    borderRadius: "4px",
+    marginTop: "0.25rem",
+  },
+  button: {
+    padding: "0.75rem",
+    fontSize: "1rem",
+    borderRadius: "4px",
+    backgroundColor: "#007bff",
+    color: "#fff",
+    border: "none",
+    cursor: "pointer",
+  },
+  error: {
+    color: "red",
+    fontSize: "0.9rem",
+  },
+  success: {
+    color: "green",
+    fontSize: "0.9rem",
+  },
+  description: {
+    marginBottom: "1rem",
+    color: "#555",
+  },
+  avatarPreviewContainer: {
+    width: "48px",
+    height: "48px",
+    borderRadius: "50%",
+    overflow: "hidden",
+    border: "1px solid #ccc",
+    marginTop: "0.5rem",
+  },
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+  coverPreviewContainer: {
+    width: "100%",
+    height: "96px",
+    borderRadius: "8px",
+    overflow: "hidden",
+    border: "1px solid #ccc",
+    marginTop: "0.5rem",
+  },
+  coverImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+}
