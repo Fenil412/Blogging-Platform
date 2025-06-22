@@ -1,5 +1,7 @@
 import { useState } from "react"
 import { useAuth } from "../contexts/AuthContext"
+import { useNavigate } from "react-router-dom"
+import { Eye, EyeOff } from "lucide-react"
 
 export default function SignUpPage() {
   const { register, loading } = useAuth()
@@ -8,6 +10,7 @@ export default function SignUpPage() {
     email: "",
     username: "",
     password: "",
+    confirmPassword: "",
     avatar: null,
     coverImage: null,
   })
@@ -15,6 +18,9 @@ export default function SignUpPage() {
   const [success, setSuccess] = useState("")
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [coverPreview, setCoverPreview] = useState(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const navigate = useNavigate()
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -45,6 +51,10 @@ export default function SignUpPage() {
     }
   }
 
+  const handleSignInRedirect = () => {
+    navigate("/signin")
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
@@ -55,198 +65,209 @@ export default function SignUpPage() {
       return
     }
 
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match")
+      return
+    }
+
     const result = await register(formData)
 
     if (result.success) {
-      setSuccess(result.message)
+      setSuccess(result.message || "Registration successful! Redirecting to sign-in...")
       setFormData({
         fullName: "",
         email: "",
         username: "",
         password: "",
+        confirmPassword: "",
         avatar: null,
         coverImage: null,
       })
       setAvatarPreview(null)
       setCoverPreview(null)
+      setTimeout(() => {
+        navigate("/signin")
+      }, 1500)
     } else {
-      setError(result.message)
+      if (result.errorCode === "EMAIL_EXISTS") {
+        setError("Email already exists. Please use a different email.")
+      } else if (result.errorCode === "USERNAME_EXISTS") {
+        setError("Username already exists. Please choose a different username.")
+      } else {
+        setError(result.message || "Registration failed. Please try again.")
+      }
     }
   }
 
   return (
-    <div style={styles.card}>
-      <h2>Create Account</h2>
-      <p style={styles.description}>Fill in your details to create a new account</p>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        {error && <p style={styles.error}>{error}</p>}
-        {success && <p style={styles.success}>{success}</p>}
-
-        <div>
-          <label htmlFor="fullName">Full Name</label>
-          <input
-            id="fullName"
-            name="fullName"
-            type="text"
-            placeholder="Enter your full name"
-            value={formData.fullName}
-            onChange={handleInputChange}
-            required
-            style={styles.input}
-          />
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-100 to-blue-100 p-4 dark:from-gray-900 dark:to-blue-900">
+      <div className="w-full max-w-md space-y-6 rounded-2xl bg-white/60 p-8 shadow-2xl backdrop-blur-lg dark:bg-gray-800/60 animate-fade-in">
+        <div className="text-center">
+          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">Create Account</h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+            Fill in your details to create a new account
+          </p>
         </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {error && <p className="text-center text-sm font-medium text-red-500">{error}</p>}
+          {success && <p className="text-center text-sm font-medium text-green-500">{success}</p>}
 
-        <div>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChange={handleInputChange}
-            required
-            style={styles.input}
-          />
-        </div>
+          <div>
+            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Full Name *
+            </label>
+            <input
+              id="fullName"
+              name="fullName"
+              type="text"
+              placeholder="Enter your full name"
+              value={formData.fullName}
+              onChange={handleInputChange}
+              required
+              className="mt-1 block w-full rounded-lg border border-gray-300/50 bg-white/80 px-4 py-2.5 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600/50 dark:bg-gray-700/80 dark:text-white dark:placeholder-gray-400"
+            />
+          </div>
 
-        <div>
-          <label htmlFor="username">Username</label>
-          <input
-            id="username"
-            name="username"
-            type="text"
-            placeholder="Choose a username"
-            value={formData.username}
-            onChange={handleInputChange}
-            required
-            style={styles.input}
-          />
-        </div>
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Email *
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+              className="mt-1 block w-full rounded-lg border border-gray-300/50 bg-white/80 px-4 py-2.5 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600/50 dark:bg-gray-700/80 dark:text-white dark:placeholder-gray-400"
+            />
+          </div>
 
-        <div>
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            placeholder="Create a password"
-            value={formData.password}
-            onChange={handleInputChange}
-            required
-            style={styles.input}
-          />
-        </div>
+          <div>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Username *
+            </label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              placeholder="Choose a username"
+              value={formData.username}
+              onChange={handleInputChange}
+              required
+              className="mt-1 block w-full rounded-lg border border-gray-300/50 bg-white/80 px-4 py-2.5 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600/50 dark:bg-gray-700/80 dark:text-white dark:placeholder-gray-400"
+            />
+          </div>
 
-        <div>
-          <label htmlFor="avatar">Avatar Image *</label>
-          <input
-            id="avatar"
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleFileChange(e, "avatar")}
-            required
-            style={styles.input}
-          />
-          {avatarPreview && (
-            <div style={styles.avatarPreviewContainer}>
-              <img src={avatarPreview} alt="Avatar preview" style={styles.avatarImage} />
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Password *
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Create a password"
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+                className="mt-1 block w-full rounded-lg border border-gray-300/50 bg-white/80 px-4 py-2.5 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600/50 dark:bg-gray-700/80 dark:text-white dark:placeholder-gray-400"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
             </div>
-          )}
-        </div>
+          </div>
 
-        <div>
-          <label htmlFor="coverImage">Cover Image (Optional)</label>
-          <input
-            id="coverImage"
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleFileChange(e, "coverImage")}
-            style={styles.input}
-          />
-          {coverPreview && (
-            <div style={styles.coverPreviewContainer}>
-              <img src={coverPreview} alt="Cover preview" style={styles.coverImage} />
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Confirm Password *
+            </label>
+            <div className="relative">
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm your password"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                required
+                className="mt-1 block w-full rounded-lg border border-gray-300/50 bg-white/80 px-4 py-2.5 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600/50 dark:bg-gray-700/80 dark:text-white dark:placeholder-gray-400"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
             </div>
-          )}
-        </div>
+          </div>
 
-        <button type="submit" disabled={loading} style={styles.button}>
-          {loading ? "Creating..." : "Create Account"}
-        </button>
-      </form>
+          <div>
+            <label htmlFor="avatar" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Avatar Image *
+            </label>
+            <input
+              id="avatar"
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileChange(e, "avatar")}
+              required
+              className="mt-1 block w-full rounded-lg border border-gray-300/50 bg-white/80 px-4 py-2.5 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600/50 dark:bg-gray-700/80 dark:text-white dark:placeholder-gray-400"
+            />
+            {avatarPreview && (
+              <div className="mt-2 h-12 w-12 overflow-hidden rounded-full border border-gray-300 dark:border-gray-600">
+                <img src={avatarPreview} alt="Avatar preview" className="h-full w-full object-cover" />
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Cover Image (Optional)
+            </label>
+            <input
+              id="coverImage"
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileChange(e, "coverImage")}
+              className="mt-1 block w-full rounded-lg border border-gray-300/50 bg-white/80 px-4 py-2.5 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600/50 dark:bg-gray-700/80 dark:text-white dark:placeholder-gray-400"
+            />
+            {coverPreview && (
+              <div className="mt-2 h-24 w-full overflow-hidden rounded-lg border border-gray-300 dark:border-gray-600">
+                <img src={coverPreview} alt="Cover preview" className="h-full w-full object-cover" />
+              </div>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-transform hover:scale-105 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? "Creating..." : "Create Account"}
+          </button>
+        </form>
+
+        <div className="mt-4 text-center">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Already have an account?{" "}
+            <button
+              onClick={handleSignInRedirect}
+              className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              Sign In
+            </button>
+          </p>
+        </div>
+      </div>
     </div>
   )
-}
-
-const styles = {
-  card: {
-    maxWidth: "500px",
-    margin: "2rem auto",
-    padding: "2rem",
-    border: "1px solid #ddd",
-    borderRadius: "8px",
-    boxShadow: "0 0 8px rgba(0,0,0,0.05)",
-    background: "#fff",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1rem",
-  },
-  input: {
-    width: "100%",
-    padding: "0.5rem",
-    fontSize: "1rem",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-    marginTop: "0.25rem",
-  },
-  button: {
-    padding: "0.75rem",
-    fontSize: "1rem",
-    borderRadius: "4px",
-    backgroundColor: "#007bff",
-    color: "#fff",
-    border: "none",
-    cursor: "pointer",
-  },
-  error: {
-    color: "red",
-    fontSize: "0.9rem",
-  },
-  success: {
-    color: "green",
-    fontSize: "0.9rem",
-  },
-  description: {
-    marginBottom: "1rem",
-    color: "#555",
-  },
-  avatarPreviewContainer: {
-    width: "48px",
-    height: "48px",
-    borderRadius: "50%",
-    overflow: "hidden",
-    border: "1px solid #ccc",
-    marginTop: "0.5rem",
-  },
-  avatarImage: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-  },
-  coverPreviewContainer: {
-    width: "100%",
-    height: "96px",
-    borderRadius: "8px",
-    overflow: "hidden",
-    border: "1px solid #ccc",
-    marginTop: "0.5rem",
-  },
-  coverImage: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-  },
 }
