@@ -16,7 +16,7 @@ const uploadOnCloudinary = async (localFilePath) => {
             resource_type: "auto",
             folder: "BloggingPlatform"
         })
-        
+
         fs.unlinkSync(localFilePath)
         return response;
 
@@ -28,9 +28,10 @@ const uploadOnCloudinary = async (localFilePath) => {
 
 const getPublicIdFromUrl = (url) => {
     try {
+        if (!url) return null;
         const parts = url.split("/");
-        const fileWithExtension = parts.pop(); // e4u5dujuq85ryb9ip0ru.jpg
-        const publicId = path.parse(fileWithExtension).name; // remove .jpg
+        const fileName = parts[parts.length - 1];
+        const publicId = fileName.split(".")[0]; // Remove file extension
         return publicId;
     } catch (error) {
         console.error("Error extracting public ID from URL:", error);

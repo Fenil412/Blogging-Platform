@@ -4,8 +4,6 @@ import cookieParser from "cookie-parser"
 
 const app = express()
 
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173"
-
 app.use(cors({
     origin: process.env.CORS_ORIGIN,
     credentials: true
@@ -18,8 +16,10 @@ app.use(cookieParser())
 
 
 import userRouter from './routes/user.routes.js'
+import adminRouter from './routes/admin.routes.js'
 
 
 app.use("/api/v1/users", userRouter)
+app.use("/api/v1/admin", adminRouter)
 
 export { app }

@@ -28,10 +28,10 @@ const generateAccessAndRefereshTokens = async (userId) => {
 
 const registerUser = asyncHandler(async (req, res) => {
 
-    const { fullName, email, username, password } = req.body
+    const { fullName, email, username, password, role } = req.body
 
     if (
-        [fullName, email, username, password].some((field) => field?.trim() === "")
+        [fullName, email, username, password, role].some((field) => field?.trim() === "")
     ) {
         throw new ApiError(400, "All fields are required")
     }
@@ -70,6 +70,7 @@ const registerUser = asyncHandler(async (req, res) => {
         coverImage: coverImage?.url || "",
         email,
         password,
+        role: role || "user", // default role is 'user'
         username: username.toLowerCase()
     })
 
@@ -384,10 +385,10 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found");
     }
 
-    const oldCoverImageUrl = old_User.avatar;
+    const oldCoverImageUrl = old_User.coverImage;
 
     if (!oldCoverImageUrl) {
-        throw new ApiError(404, "Old avatar not found");
+        throw new ApiError(404, "Old cover image not found");
     }
 
     const user = await User.findByIdAndUpdate(
@@ -416,6 +417,64 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         )
 })
 
+const deleteUser = asyncHandler(async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Get the user data first
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // Store image URLs and email before deletion
+    const coverImageUrl = user.coverImage;
+    const avatarUrl = user.avatar;
+    const userEmail = user.email;
+
+    const coverPublicId = getPublicIdFromUrl(coverImageUrl);
+    const avatarPublicId = getPublicIdFromUrl(avatarUrl);
+
+    // Delete the user
+    await User.deleteOne({ _id: userId });
+
+    // Destroy images from Cloudinary
+    const coverDestroyResult = await cloudinary.uploader.destroy(coverPublicId);
+    const avatarDestroyResult = await cloudinary.uploader.destroy(avatarPublicId);
+
+    // Send farewell email (optional)
+    try {
+      await sendMail(
+        userEmail,
+        "Account Deleted - Thanks for using Blogging Platform",
+        "<h3>Hello</h3><p>Your account has been successfully deleted.</p>"
+      );
+    } catch (emailError) {
+      console.error("Failed to send farewell email:", emailError);
+    }
+
+    // Send success response
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          cloudinaryResults: {
+            cover: coverDestroyResult,
+            avatar: avatarDestroyResult,
+          },
+          mongoDeleted: true,
+        },
+        "User account deleted successfully"
+      )
+    );
+  } catch (error) {
+    console.error("Error in deleteUser:", error);
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(500, `Failed to delete user: ${error.message}`);
+  }
+});
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
     const { username } = req.params
@@ -554,6 +613,7 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
+    deleteUser,
     updateUserCoverImage,
     getUserChannelProfile,
     getWatchHistory
