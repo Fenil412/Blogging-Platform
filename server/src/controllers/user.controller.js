@@ -419,10 +419,9 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
 const deleteUser = asyncHandler(async (req, res) => {
   try {
-    const userId = req.params.id;
-
     // Get the user data first
-    const user = await User.findById(userId);
+    const user = await User.findById(req.params.id);
+
     if (!user) {
       throw new ApiError(404, "User not found");
     }
@@ -434,24 +433,20 @@ const deleteUser = asyncHandler(async (req, res) => {
 
     const coverPublicId = getPublicIdFromUrl(coverImageUrl);
     const avatarPublicId = getPublicIdFromUrl(avatarUrl);
+    console.log(userEmail, coverPublicId, avatarPublicId);
 
     // Delete the user
-    await User.deleteOne({ _id: userId });
+    await User.findByIdAndDelete(req.params.id);
 
     // Destroy images from Cloudinary
     const coverDestroyResult = await cloudinary.uploader.destroy(coverPublicId);
     const avatarDestroyResult = await cloudinary.uploader.destroy(avatarPublicId);
 
-    // Send farewell email (optional)
-    try {
       await sendMail(
         userEmail,
         "Account Deleted - Thanks for using Blogging Platform",
         "<h3>Hello</h3><p>Your account has been successfully deleted.</p>"
       );
-    } catch (emailError) {
-      console.error("Failed to send farewell email:", emailError);
-    }
 
     // Send success response
     res.status(200).json(
