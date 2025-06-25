@@ -1,7 +1,7 @@
 import mongoose, {Schema} from "mongoose"
 
 const followersSchema = new Schema({
-    subscriber: {
+    follower: {
         type: Schema.Types.ObjectId, // one who is following
         ref: "User"
     },
@@ -13,4 +13,4 @@ const followersSchema = new Schema({
 
 
 
-export const Followers = mongoose.model("Followers", followersSchema)
+export const Follower = mongoose.model("Follower", followersSchema)

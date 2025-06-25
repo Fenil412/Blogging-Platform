@@ -41,10 +41,10 @@ const userSchema = new Schema(
         coverImage: {
             type: String, // cloudinary url
         },
-        watchHistory: [
+        ReadHistory: [
             {
                 type: Schema.Types.ObjectId,
-                ref: "Video"
+                ref: "Blog"
             }
         ],
         password: {

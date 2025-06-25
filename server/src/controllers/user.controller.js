@@ -486,31 +486,31 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         },
         {
             $lookup: {
-                from: "subscriptions",
+                from: "followers",
                 localField: "_id",
                 foreignField: "channel",
-                as: "subscribers"
+                as: "followers"
             }
         },
         {
             $lookup: {
-                from: "subscriptions",
+                from: "followers",
                 localField: "_id",
-                foreignField: "subscriber",
-                as: "subscribedTo"
+                foreignField: "follower",
+                as: "following"
             }
         },
         {
             $addFields: {
-                subscribersCount: {
-                    $size: "$subscribers"
+                followersCount: {
+                    $size: "$followers"
                 },
-                channelsSubscribedToCount: {
-                    $size: "$subscribedTo"
+                channelsFollowsToCount: {
+                    $size: "$following"
                 },
-                isSubscribed: {
+                isFollowing: {
                     $cond: {
-                        if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+                        if: { $in: [req.user?._id, "$followers.follower"] },
                         then: true,
                         else: false
                     }
@@ -521,9 +521,9 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
             $project: {
                 fullName: 1,
                 username: 1,
-                subscribersCount: 1,
-                channelsSubscribedToCount: 1,
-                isSubscribed: 1,
+                followersCount: 1,
+                channelsFollowsToCount: 1,
+                isFollowing: 1,
                 avatar: 1,
                 coverImage: 1,
                 email: 1
@@ -552,10 +552,10 @@ const getWatchHistory = asyncHandler(async (req, res) => {
         },
         {
             $lookup: {
-                from: "videos",
-                localField: "watchHistory",
+                from: "blogs",
+                localField: "ReadHistory",
                 foreignField: "_id",
-                as: "watchHistory",
+                as: "ReadHistory",
                 pipeline: [
                     {
                         $lookup: {
@@ -591,8 +591,8 @@ const getWatchHistory = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                user[0].watchHistory,
-                "Watch history fetched successfully"
+                user[0].ReadHistory,
+                "Read history fetched successfully"
             )
         )
 })
