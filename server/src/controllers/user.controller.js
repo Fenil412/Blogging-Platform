@@ -1,11 +1,10 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js"
 import { User } from "../models/user.model.js"
-import { uploadOnCloudinary, getPublicIdFromUrl } from "../utils/cloudinary.js"
+import { uploadOnCloudinary, deleteFromCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
 import mongoose from "mongoose";
-import { v2 as cloudinary } from "cloudinary"
 import { sendMail } from "../utils/mailer.js";
 const otpStore = {};
 
@@ -319,23 +318,17 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Avatar file is missing")
     }
 
+    // Delete old avatar from Cloudinary
+    if (req.user.avatar) {
+        const publicId = req.user.avatar.split('/').pop().split('.')[0];
+        await deleteFromCloudinary(publicId); 
+    }
+
     const avatar = await uploadOnCloudinary(avatarLocalPath)
 
     if (!avatar.url) {
         throw new ApiError(400, "Error while uploading on avatar")
 
-    }
-
-    const old_User = await User.findById(req.user?._id);
-
-    if (!old_User) {
-        throw new ApiError(404, "User not found");
-    }
-
-    const oldAvatarUrl = old_User.avatar;
-
-    if (!oldAvatarUrl) {
-        throw new ApiError(404, "Old avatar not found");
     }
 
     const user = await User.findByIdAndUpdate(
@@ -347,16 +340,6 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         },
         { new: true }
     ).select("-password")
-
-    // Delete old avatar from Cloudinary (if any)
-    const publicId = getPublicIdFromUrl(oldAvatarUrl);
-    if (publicId) {
-        try {
-            await cloudinary.uploader.destroy(publicId);
-        } catch (err) {
-            console.error("Failed to delete old avatar:", err);
-        }
-    }
 
     return res
         .status(200)
@@ -374,21 +357,15 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
+     // Delete old cover image from Cloudinary
+    if (req.user.coverImage) {
+        const publicId = req.user.coverImage.split('/').pop().split('.')[0];
+        await deleteFromCloudinary(publicId);
+    }
+
     if (!coverImage.url) {
-        throw new ApiError(400, "Error while uploading on avatar")
+        throw new ApiError(400, "Error while uploading on cover image")
 
-    }
-
-    const old_User = await User.findById(req.user?._id);
-
-    if (!old_User) {
-        throw new ApiError(404, "User not found");
-    }
-
-    const oldCoverImageUrl = old_User.coverImage;
-
-    if (!oldCoverImageUrl) {
-        throw new ApiError(404, "Old cover image not found");
     }
 
     const user = await User.findByIdAndUpdate(
@@ -401,15 +378,6 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         { new: true }
     ).select("-password")
 
-    // Delete old avatar from Cloudinary (if any)
-    const publicId = getPublicIdFromUrl(oldCoverImageUrl);
-    if (publicId) {
-        try {
-            await cloudinary.uploader.destroy(publicId);
-        } catch (err) {
-            console.error("Failed to delete old avatar:", err);
-        }
-    }
     return res
         .status(200)
         .json(
@@ -426,21 +394,22 @@ const deleteUser = asyncHandler(async (req, res) => {
       throw new ApiError(404, "User not found");
     }
 
-    // Store image URLs and email before deletion
-    const coverImageUrl = user.coverImage;
-    const avatarUrl = user.avatar;
     const userEmail = user.email;
 
-    const coverPublicId = getPublicIdFromUrl(coverImageUrl);
-    const avatarPublicId = getPublicIdFromUrl(avatarUrl);
-    console.log(userEmail, coverPublicId, avatarPublicId);
+    // Delete old avatar from Cloudinary
+    if (req.user.avatar) {
+        const publicId = req.user.avatar.split('/').pop().split('.')[0];
+        await deleteFromCloudinary(publicId); 
+    }
+
+    // Delete old cover image from Cloudinary
+    if (req.user.coverImage) {
+        const publicId = req.user.coverImage.split('/').pop().split('.')[0];
+        await deleteFromCloudinary(publicId);
+    }
 
     // Delete the user
     await User.findByIdAndDelete(req.params.id);
-
-    // Destroy images from Cloudinary
-    const coverDestroyResult = await cloudinary.uploader.destroy(coverPublicId);
-    const avatarDestroyResult = await cloudinary.uploader.destroy(avatarPublicId);
 
       await sendMail(
         userEmail,
