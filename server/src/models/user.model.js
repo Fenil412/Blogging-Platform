@@ -57,6 +57,14 @@ const userSchema = new Schema(
             enum: ['user', 'admin'],
             default: 'user'
         },
+        followersCount: {
+            type: Number,
+            default: 0
+        },
+        followingCount: {
+            type: Number,
+            default: 0
+        },
         refreshToken: {
             type: String
         }

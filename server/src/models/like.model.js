@@ -1,24 +1,40 @@
-import mongoose, {Schema} from "mongoose";
+import mongoose from "mongoose";
 
-
-const likeSchema = new Schema({
+const likeSchema = new mongoose.Schema(
+  {
     blog: {
-        type: Schema.Types.ObjectId,
-        ref: "Blog"
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Blog",
+      index: true
     },
     comment: {
-        type: Schema.Types.ObjectId,
-        ref: "Comment"
-    },
-    tweet: {
-        type: Schema.Types.ObjectId,
-        ref: "Tweet"
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Comment",
+      index: true
     },
     likedBy: {
-        type: Schema.Types.ObjectId,
-        ref: "User"
-    },
-    
-}, {timestamps: true})
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true
+    }
+  },
+  { 
+    timestamps: true,
+    // Prevents duplicate likes
+    statics: {
+      async hasLiked(userId, targetId, type) {
+        return await this.exists({ 
+          likedBy: userId, 
+          [type]: targetId 
+        });
+      }
+    }
+  }
+);
 
-export const Like = mongoose.model("Like", likeSchema)
+// Compound indexes for faster queries
+likeSchema.index({ blog: 1, likedBy: 1 }, { unique: true, sparse: true });
+likeSchema.index({ comment: 1, likedBy: 1 }, { unique: true, sparse: true });
+
+export const Like = mongoose.model("Like", likeSchema);

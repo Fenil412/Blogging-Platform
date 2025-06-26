@@ -5,23 +5,35 @@ const commentSchema = new Schema(
     {
         content: {
             type: String,
-            required: true
+            required: true,
+            trim: true
         },
         blog: {
             type: Schema.Types.ObjectId,
-            ref: "Blog"
+            ref: "Blog",
+            required: true
         },
         owner: {
             type: Schema.Types.ObjectId,
-            ref: "User"
+            ref: "User",
+            required: true
+        },
+        parentComment: {
+            type: Schema.Types.ObjectId,
+            ref: "Comment",
+            default: null
+        },
+        depth: {
+            type: Number,
+            default: 0
         }
     },
     {
         timestamps: true
     }
-)
+);
 
+commentSchema.index({ blog: 1, createdAt: -1 });
+commentSchema.plugin(mongooseAggregatePaginate);
 
-commentSchema.plugin(mongooseAggregatePaginate)
-
-export const Comment = mongoose.model("Comment", commentSchema)
+export const Comment = mongoose.model("Comment", commentSchema);

@@ -1,26 +1,50 @@
 import mongoose, {Schema} from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const playlistSchema = new Schema({
     name: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        maxLength: 100
     },
-    content: {
+    description: {
         type: String,
-        required: true
+        trim: true,
+        maxLength: 500
     },
-    blogs: [
-        {
-            type: Schema.Types.ObjectId,
-            ref: "Blog"
-        }
-    ],
+    blogs: [{
+        type: Schema.Types.ObjectId,
+        ref: "Blog"
+    }],
     owner: {
         type: Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
+        required: true
     },
-}, {timestamps: true})
+    isPublic: {
+        type: Boolean,
+        default: true
+    },
+    coverImage: {
+        type: String // Cloudinary URL
+    }
+}, {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
 
+// Virtual field for blog count
+playlistSchema.virtual('blogCount').get(function() {
+    return this.blogs.length;
+});
 
+// Add pagination plugin
+playlistSchema.plugin(mongooseAggregatePaginate);
 
-export const Playlist = mongoose.model("Playlist", playlistSchema)
+// Indexes for faster queries
+playlistSchema.index({ owner: 1 });
+playlistSchema.index({ name: "text", description: "text" });
+
+export const Playlist = mongoose.model("Playlist", playlistSchema);
