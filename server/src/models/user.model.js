@@ -16,7 +16,7 @@ const userSchema = new Schema(
             type: String,
             required: true,
             unique: true,
-            lowecase: true,
+            lowercase: true,
             trim: true,
             validate: {
                 validator: function (v) {
@@ -32,25 +32,27 @@ const userSchema = new Schema(
             index: true
         },
         bio: {
-            type: String
+            type: String,
+            default: "",
+            trim: true,
+            maxlength: 200
         },
         avatar: {
-            type: String, // cloudinary url
-            required: true,
+            url: String,
+            public_id: String
         },
         coverImage: {
-            type: String, // cloudinary url
+            url: String,
+            public_id: String
         },
-        ReadHistory: [
-            {
-                type: Schema.Types.ObjectId,
-                ref: "Blog"
-            }
-        ],
+        readHistory: [{
+            type: Schema.Types.ObjectId,
+            ref: "Blog"
+        }],
         password: {
             type: String,
             required: [true, 'Password is required'],
-            minlength: [6, 'Password must be at least 6 characters long']
+            minlength: [8, 'Password must be at least 8 characters long']
         },
         role: {
             type: String,
@@ -67,18 +69,60 @@ const userSchema = new Schema(
         },
         refreshToken: {
             type: String
+        },
+        isVerified: {
+            type: Boolean,
+            default: false
+        },
+        lastLogin: {
+            type: Date
+        },
+        status: {
+            type: String,
+            enum: ['active', 'suspended', 'pending'],
+            default: 'active'
+        },
+        website: {
+            type: String,
+            trim: true
+        },
+        location: {
+            type: String,
+            trim: true
+        },
+        socialLinks: {
+            twitter: String,
+            linkedin: String,
+            github: String
         }
-
     },
     {
-        timestamps: true
+        timestamps: true,
+        toJSON: {
+            virtuals: true,
+            transform: function (doc, ret) {
+                delete ret.password;
+                delete ret.refreshToken;
+                return ret;
+            }
+        },
+        toObject: {
+            virtuals: true
+        }
     }
 )
+
+// Virtual for engagement rate
+userSchema.virtual('engagementRate').get(function () {
+    if (this.followersCount === 0) return 0;
+    return ((this.likesCount + this.commentsCount) / this.followersCount) * 100;
+});
 
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
 
-    this.password = await bcrypt.hash(this.password, 10)
+    // Increase salt rounds for better security
+    this.password = await bcrypt.hash(this.password, 12)
     next()
 })
 
@@ -92,24 +136,21 @@ userSchema.methods.generateAccessToken = function () {
             _id: this._id,
             email: this.email,
             username: this.username,
-            fullName: this.fullName
+            fullName: this.fullName,
+            role: this.role
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY || '15m'
         }
     )
 }
+
 userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
-        {
-            _id: this._id,
-
-        },
+        { _id: this._id },
         process.env.REFRESH_TOKEN_SECRET,
-        {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
-        }
+        { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || '7d' }
     )
 }
 

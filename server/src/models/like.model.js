@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import mongoosePaginate from "mongoose-paginate-v2";
 
 const likeSchema = new mongoose.Schema(
   {
@@ -33,6 +34,7 @@ const likeSchema = new mongoose.Schema(
   }
 );
 
+likeSchema.plugin(mongoosePaginate);
 // Compound indexes for faster queries
 likeSchema.index({ blog: 1, likedBy: 1 }, { unique: true, sparse: true });
 likeSchema.index({ comment: 1, likedBy: 1 }, { unique: true, sparse: true });

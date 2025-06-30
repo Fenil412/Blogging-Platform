@@ -1,5 +1,5 @@
 import mongoose, {Schema} from "mongoose";
-import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
+import mongoosePaginate from "mongoose-paginate-v2";
 
 const commentSchema = new Schema(
     {
@@ -34,6 +34,6 @@ const commentSchema = new Schema(
 );
 
 commentSchema.index({ blog: 1, createdAt: -1 });
-commentSchema.plugin(mongooseAggregatePaginate);
+commentSchema.plugin(mongoosePaginate);
 
 export const Comment = mongoose.model("Comment", commentSchema);

@@ -14,7 +14,7 @@ router.use(verifyJWT);
 router.route("/:authorId").post(toggleFollow);
 
 // Get followers of an author
-router.route("/followers/:authorId").get(getUserFollowers);
+router.route("/:authorId").get(getUserFollowers);
 
 // Get who a user is following
 router.route("/following/:userId").get(getFollowingList);

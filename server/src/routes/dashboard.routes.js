@@ -1,15 +1,22 @@
 import { Router } from 'express';
 import {
-    getChannelStats,
-    getChannelBlogs,
+    getAuthorStats,
+    getAuthorBlogs,
+    getAnalytics
 } from "../controllers/dashboard.controller.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
 
 const router = Router();
 
-router.use(verifyJWT); // Apply verifyJWT middleware to all routes in this file
+router.use(verifyJWT);
 
-router.route("/stats").get(getChannelStats);
-router.route("/blogs").get(getChannelBlogs);
+router.route("/stats")
+    .get(getAuthorStats);
 
-export default router
+router.route("/blogs")
+    .get(getAuthorBlogs);
+
+router.route("/analytics")
+    .get(getAnalytics);
+
+export default router;

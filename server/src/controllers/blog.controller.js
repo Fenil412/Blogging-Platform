@@ -60,7 +60,7 @@ const getAllBlogs = asyncHandler(async (req, res) => {
     };
 
     const blogs = await Blog.aggregatePaginate(
-        Blog.aggregate(pipeline), 
+        Blog.aggregate(pipeline),
         options
     );
 
@@ -71,38 +71,42 @@ const getAllBlogs = asyncHandler(async (req, res) => {
 
 const publishABlog = asyncHandler(async (req, res) => {
     const { title, description, content, tags } = req.body;
-    
+
     if (!title?.trim()) throw new ApiError(400, "Title is required");
     if (!description?.trim()) throw new ApiError(400, "Description is required");
     if (!content?.trim()) throw new ApiError(400, "Content is required");
 
-    // Handle thumbnail upload
     const thumbnailLocalPath = req.file?.path;
     if (!thumbnailLocalPath) throw new ApiError(400, "Thumbnail is required");
 
     const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
     if (!thumbnail?.url) throw new ApiError(500, "Thumbnail upload failed");
 
-    // Create blog with generated slug
-    const blog = await Blog.create({
-        title,
-        description,
-        content,
-        thumbnail: thumbnail.url,
-        author: req.user._id,
-        tags: tags?.split(",").map(tag => tag.trim()) || []
-    });
+    const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9 -]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
 
-    if (!blog) throw new ApiError(500, "Blog creation failed");
+    const blog = await Blog.create({
+    title,
+    slug,
+    description,
+    content,
+    thumbnail: thumbnail.url,
+    author: req.user._id,
+    tags: tags?.split(",").map(tag => tag.trim()) || []
+});
 
     return res
         .status(201)
         .json(new ApiResponse(201, blog, "Blog published successfully"));
 });
 
+
 const getBlogById = asyncHandler(async (req, res) => {
     const { blogId } = req.params;
-    
+
     if (!isValidObjectId(blogId)) {
         throw new ApiError(400, "Invalid blog ID");
     }
@@ -123,7 +127,7 @@ const getBlogById = asyncHandler(async (req, res) => {
 const updateBlog = asyncHandler(async (req, res) => {
     const { blogId } = req.params;
     const { title, description, content, tags } = req.body;
-    
+
     if (!isValidObjectId(blogId)) {
         throw new ApiError(400, "Invalid blog ID");
     }
@@ -160,7 +164,7 @@ const updateBlog = asyncHandler(async (req, res) => {
 
 const deleteBlog = asyncHandler(async (req, res) => {
     const { blogId } = req.params;
-    
+
     if (!isValidObjectId(blogId)) {
         throw new ApiError(400, "Invalid blog ID");
     }
@@ -180,7 +184,7 @@ const deleteBlog = asyncHandler(async (req, res) => {
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { blogId } = req.params;
-    
+
     if (!isValidObjectId(blogId)) {
         throw new ApiError(400, "Invalid blog ID");
     }

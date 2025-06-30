@@ -1,5 +1,5 @@
 import mongoose, {Schema} from "mongoose";
-import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
+import mongoosePaginate from "mongoose-paginate-v2";
 
 const playlistSchema = new Schema({
     name: {
@@ -41,7 +41,7 @@ playlistSchema.virtual('blogCount').get(function() {
 });
 
 // Add pagination plugin
-playlistSchema.plugin(mongooseAggregatePaginate);
+playlistSchema.plugin(mongoosePaginate);
 
 // Indexes for faster queries
 playlistSchema.index({ owner: 1 });
