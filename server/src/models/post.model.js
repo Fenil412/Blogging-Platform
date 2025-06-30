@@ -1,5 +1,5 @@
 import mongoose, {Schema} from "mongoose";
-import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
+import mongoosePaginate from "mongoose-paginate-v2";
 
 const postSchema = new Schema({
     content: {
@@ -41,7 +41,7 @@ postSchema.virtual('engagementRate').get(function() {
 });
 
 // Add pagination plugin
-postSchema.plugin(mongooseAggregatePaginate);
+postSchema.plugin(mongoosePaginate);
 
 // Indexes for faster queries
 postSchema.index({ owner: 1 });
