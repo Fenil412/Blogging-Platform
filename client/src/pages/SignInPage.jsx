@@ -1,75 +1,69 @@
-"use client"
+import { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 
-import { useState } from "react"
-import { useAuth } from "../contexts/AuthContext"
-import { useNavigate } from "react-router-dom"
-import { Eye, EyeOff } from "lucide-react"
-
-export default function LoginForm() {
-  const { login, loading } = useAuth()
+export default function SignInPage() {
+  const { login, loading } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     username: "",
     password: "",
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
-  const [loginMethod, setLoginMethod] = useState("email")
-  const navigate = useNavigate()
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loginMethod, setLoginMethod] = useState("email");
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }))
-    setError("")
-  }
+    }));
+    setError("");
+  };
 
   const handleLogin = async (e) => {
-    e.preventDefault()
-    setError("")
-    setSuccess("")
+    e.preventDefault();
+    setError("");
+    setSuccess("");
 
     if (loginMethod === "email" && !formData.email) {
-      setError("Please enter your email.")
-      return
+      setError("Please enter your email.");
+      return;
     } else if (loginMethod === "username" && !formData.username) {
-      setError("Please enter your username.")
-      return
+      setError("Please enter your username.");
+      return;
     }
     if (!formData.password) {
-      setError("Please enter your password.")
-      return
+      setError("Please enter your password.");
+      return;
     }
 
-    const loginData = {
-      password: formData.password,
-    }
-    if (loginMethod === "email") {
-      loginData.email = formData.email
-    } else {
-      loginData.username = formData.username
-    }
+    const loginData = { password: formData.password };
+    if (loginMethod === "email") loginData.email = formData.email;
+    else loginData.username = formData.username;
 
-    const result = await login(loginData)
+    const result = await login(loginData);
     if (result.success) {
       if (result.requiresOtp) {
-        setSuccess("OTP sent to your email.")
-        navigate("/verify-otp")
+        setSuccess("OTP sent to your email.");
+        navigate("/verify-otp");
       } else {
-        setSuccess("Login successful.")
-        // Optionally, navigate to a dashboard
+        setSuccess("Login successful.");
+        // Navigate to dashboard or home
+        navigate("/dashboard");
       }
     } else {
-      setError(result.message)
+      setError(result.message);
     }
-  }
+  };
 
   const handleSignupRedirect = () => {
-    navigate("/signup")
-  }
+    navigate("/signup");
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-100 to-blue-100 p-4 dark:from-gray-900 dark:to-blue-900">
@@ -80,11 +74,9 @@ export default function LoginForm() {
             Enter your credentials to access your account
           </p>
         </div>
-
         <form onSubmit={handleLogin} className="space-y-5">
           {error && <p className="text-center text-sm font-medium text-red-500">{error}</p>}
           {success && <p className="text-center text-sm font-medium text-green-500">{success}</p>}
-
           <div className="flex space-x-3">
             <button
               type="button"
@@ -109,7 +101,6 @@ export default function LoginForm() {
               Username
             </button>
           </div>
-
           {loginMethod === "email" ? (
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -143,7 +134,6 @@ export default function LoginForm() {
               />
             </div>
           )}
-
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               Password
@@ -168,7 +158,6 @@ export default function LoginForm() {
               </button>
             </div>
           </div>
-
           <button
             type="submit"
             disabled={loading}
@@ -177,7 +166,6 @@ export default function LoginForm() {
             {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
-
         <div className="mt-4 text-center">
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Don't have an account?{" "}
@@ -191,5 +179,5 @@ export default function LoginForm() {
         </div>
       </div>
     </div>
-  )
+  );
 }

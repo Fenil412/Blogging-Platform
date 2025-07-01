@@ -49,7 +49,8 @@ export function AuthProvider({ children }) {
       uploadData.append("email", formData.email);
       uploadData.append("username", formData.username);
       uploadData.append("password", formData.password);
-      uploadData.append("role", formData.role || "user"); // Default to 'user' role
+      uploadData.append("bio", formData.bio || "");
+      uploadData.append("role", formData.role || "user");
 
       if (formData.avatar) {
         uploadData.append("avatar", formData.avatar);
@@ -94,7 +95,7 @@ export function AuthProvider({ children }) {
 
       if (response.data.data?.requiresOtp) {
         setRequiresOtp(true);
-        setEmailForOtp(email || username);
+        setEmailForOtp(response.data.data.email); // Use the email from the response
         return {
           success: true,
           requiresOtp: true,
@@ -198,11 +199,22 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const updateAccountDetails = async ({ fullName, email }) => {
+  const updateAccountDetails = async ({
+    fullName,
+    email,
+    bio,
+    website,
+    location,
+    socialLinks,
+  }) => {
     try {
       const response = await axios.patch("/api/v1/users/update-account", {
         fullName,
         email,
+        bio,
+        website,
+        location,
+        socialLinks,
       });
 
       if (response.data.success) {
@@ -297,7 +309,7 @@ export function AuthProvider({ children }) {
 
   const getUserChannelProfile = async (username) => {
     try {
-      const response = await axios.get(`/api/v1/users/c/${username}`);
+      const response = await axios.get(`/api/v1/users/profile/${username}`);
 
       if (response.data.success) {
         return {
@@ -320,9 +332,9 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const getWatchHistory = async () => {
+  const getReadHistory = async () => {
     try {
-      const response = await axios.get("/api/v1/users/history");
+      const response = await axios.get("/api/v1/users/read-history");
 
       if (response.data.success) {
         return {
@@ -333,61 +345,62 @@ export function AuthProvider({ children }) {
 
       return {
         success: false,
-        message: "Failed to fetch watch history",
+        message: "Failed to fetch read history",
       };
     } catch (error) {
-      console.error("Failed to fetch watch history:", error);
+      console.error("Failed to fetch read history:", error);
       return {
         success: false,
         message:
-          error.response?.data?.message || "Failed to fetch watch history",
+          error.response?.data?.message || "Failed to fetch read history",
       };
     }
   };
 
   const deleteAccount = async (userId) => {
-  if (
-    !confirm(
-      "Are you sure you want to delete this account? This action cannot be undone."
-    )
-  ) {
-    return;
-  }
-
-  try {
-    const response = await axios.delete(`/api/v1/users/delete/${userId}`);
-
-    if (response.data.success) {
-      toast({
-        variant: "success",
-        title: "Success",
-        description: "Account and all associated images deleted successfully.",
-      });
-
-      logout();
-      navigate("/signin");
+    if (
+      !confirm(
+        "Are you sure you want to delete this account? This action cannot be undone."
+      )
+    ) {
+      return;
     }
-  } catch (error) {
-    console.error("Delete account failed:", error);
 
-    if (error.response?.status === 401) {
-      toast({
-        variant: "destructive",
-        title: "Authentication Error",
-        description: "Your session has expired. Please log in again.",
-      });
-      navigate("/signin");
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description:
-          error.response?.data?.message ||
-          "Failed to delete account. Please try again.",
-      });
+    try {
+      const response = await axios.delete(`/api/v1/users/delete/${userId}`);
+
+      if (response.data.success) {
+        toast({
+          variant: "success",
+          title: "Success",
+          description:
+            "Account and all associated images deleted successfully.",
+        });
+
+        logout();
+        navigate("/signin");
+      }
+    } catch (error) {
+      console.error("Delete account failed:", error);
+
+      if (error.response?.status === 401) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "Your session has expired. Please log in again.",
+        });
+        navigate("/signin");
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description:
+            error.response?.data?.message ||
+            "Failed to delete account. Please try again.",
+        });
+      }
     }
-  }
-};
+  };
 
   // Setup axios interceptor for automatic token refresh
   useEffect(() => {
@@ -429,7 +442,7 @@ export function AuthProvider({ children }) {
     deleteAccount,
     updateCoverImage,
     getUserChannelProfile,
-    getWatchHistory,
+    getReadHistory,
     checkAuthStatus,
   };
 

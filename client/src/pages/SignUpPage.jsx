@@ -11,6 +11,7 @@ export default function SignUpPage() {
     username: "",
     password: "",
     confirmPassword: "",
+    bio: "",
     role: "",
     avatar: null,
     coverImage: null,
@@ -83,6 +84,7 @@ export default function SignUpPage() {
         username: "",
         password: "",
         confirmPassword: "",
+        bio: "",
         role: "",
         avatar: null,
         coverImage: null,
@@ -93,15 +95,7 @@ export default function SignUpPage() {
         navigate("/signin");
       }, 1500);
     } else {
-      if (result.errorCode === "EMAIL_EXISTS") {
-        setError("Email already exists. Please use a different email.");
-      } else if (result.errorCode === "USERNAME_EXISTS") {
-        setError(
-          "Username already exists. Please choose a different username."
-        );
-      } else {
-        setError(result.message || "Registration failed. Please try again.");
-      }
+      setError(result.message || "Registration failed. Please try again.");
     }
   };
 
@@ -127,7 +121,6 @@ export default function SignUpPage() {
               {success}
             </p>
           )}
-
           <div>
             <label
               htmlFor="fullName"
@@ -146,7 +139,6 @@ export default function SignUpPage() {
               className="mt-1 block w-full rounded-lg border border-gray-300/50 bg-white/80 px-4 py-2.5 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600/50 dark:bg-gray-700/80 dark:text-white dark:placeholder-gray-400"
             />
           </div>
-
           <div>
             <label
               htmlFor="email"
@@ -165,7 +157,6 @@ export default function SignUpPage() {
               className="mt-1 block w-full rounded-lg border border-gray-300/50 bg-white/80 px-4 py-2.5 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600/50 dark:bg-gray-700/80 dark:text-white dark:placeholder-gray-400"
             />
           </div>
-
           <div>
             <label
               htmlFor="username"
@@ -184,7 +175,6 @@ export default function SignUpPage() {
               className="mt-1 block w-full rounded-lg border border-gray-300/50 bg-white/80 px-4 py-2.5 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600/50 dark:bg-gray-700/80 dark:text-white dark:placeholder-gray-400"
             />
           </div>
-
           <div>
             <label
               htmlFor="password"
@@ -216,7 +206,6 @@ export default function SignUpPage() {
               </button>
             </div>
           </div>
-
           <div>
             <label
               htmlFor="confirmPassword"
@@ -248,25 +237,43 @@ export default function SignUpPage() {
               </button>
             </div>
           </div>
-
           <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+            <label
+              htmlFor="bio"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+            >
+              Bio (Optional)
+            </label>
+            <input
+              id="bio"
+              name="bio"
+              type="text"
+              placeholder="Tell us about yourself"
+              value={formData.bio}
+              onChange={handleInputChange}
+              className="mt-1 block w-full rounded-lg border border-gray-300/50 bg-white/80 px-4 py-2.5 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600/50 dark:bg-gray-700/80 dark:text-white dark:placeholder-gray-400"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="role"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+            >
               Role *
             </label>
             <select
               id="role"
               name="role"
-              placeholder="Select your role"
               value={formData.role}
               onChange={handleInputChange}
               required
               className="mt-1 block w-full rounded-lg border border-gray-300/50 bg-white/80 px-4 py-2.5 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 dark:border-gray-600/50 dark:bg-gray-700/80 dark:text-white dark:placeholder-gray-400"
             >
+              <option value="">Select your role</option>
               <option value="user">User</option>
               <option value="admin">Admin</option>
             </select>
           </div>
-
           <div>
             <label
               htmlFor="avatar"
@@ -292,7 +299,6 @@ export default function SignUpPage() {
               </div>
             )}
           </div>
-
           <div>
             <label
               htmlFor="coverImage"
@@ -317,7 +323,6 @@ export default function SignUpPage() {
               </div>
             )}
           </div>
-
           <button
             type="submit"
             disabled={loading}
@@ -326,7 +331,6 @@ export default function SignUpPage() {
             {loading ? "Creating..." : "Create Account"}
           </button>
         </form>
-
         <div className="mt-4 text-center">
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Already have an account?{" "}

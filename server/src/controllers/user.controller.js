@@ -118,8 +118,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
     // Generate and send OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    otpStore[user.email] = otp;
-    
+    otpStore[user.email] = otp;  // Stores OTP with user's email
+
     await sendMail(
         user.email,
         "Your Login OTP",
@@ -131,7 +131,7 @@ const loginUser = asyncHandler(async (req, res) => {
         new ApiResponse(200, { 
             message: 'OTP sent to email', 
             requiresOtp: true,
-            email: user.email 
+            email: user.email  // Sends back the user's email
         })
     )
 })
@@ -160,7 +160,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        maxAge: 10 * 60 * 1000 // 10 minutes
     };
 
     await sendMail(
