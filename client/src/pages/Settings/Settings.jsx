@@ -25,7 +25,7 @@ const Settings = () => {
     deleteAccount,
     updateCoverImage,
     getUserChannelProfile,
-    getWatchHistory,
+    getReadHistory,
     checkAuthStatus,
     refreshToken,
   } = useAuth();
@@ -33,13 +33,17 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-  const [watchHistory, setWatchHistory] = useState([]);
+  const [readHistory, setReadHistory] = useState([]);
   const [channelProfile, setChannelProfile] = useState(null);
 
   // Profile form state
   const [profileForm, setProfileForm] = useState({
     fullName: "",
     email: "",
+    bio: "",
+    website: "",
+    location: "",
+    socialLinks: {},
   });
 
   // Password form state
@@ -67,17 +71,21 @@ const Settings = () => {
       setProfileForm({
         fullName: user.fullName || "",
         email: user.email || "",
+        bio: user.bio || "",
+        website: user.website || "",
+        location: user.location || "",
+        socialLinks: user.socialLinks || {},
       });
     }
   }, [user]);
 
-  // Load channel profile and watch history
+  // Load channel profile and read history
   useEffect(() => {
     if (user && activeTab === "channel") {
       loadChannelProfile();
     }
     if (user && activeTab === "history") {
-      loadWatchHistory();
+      loadReadHistory();
     }
   }, [user, activeTab]);
 
@@ -92,11 +100,11 @@ const Settings = () => {
     setIsLoading(false);
   };
 
-  const loadWatchHistory = async () => {
+  const loadReadHistory = async () => {
     setIsLoading(true);
-    const result = await getWatchHistory();
+    const result = await getReadHistory();
     if (result.success) {
-      setWatchHistory(result.data);
+      setReadHistory(result.data);
     } else {
       setMessage({ type: "error", text: result.message });
     }
@@ -129,8 +137,8 @@ const Settings = () => {
       return;
     }
 
-    if (passwordForm.newPassword.length < 6) {
-      showMessage("error", "New password must be at least 6 characters long");
+    if (passwordForm.newPassword.length < 8) {
+      showMessage("error", "New password must be at least 8 characters long");
       return;
     }
 
@@ -268,7 +276,9 @@ const Settings = () => {
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Settings
+                </h1>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">
                   Manage your account settings and preferences
                 </p>
@@ -318,7 +328,7 @@ const Settings = () => {
           >
             <div className="flex items-center justify-between">
               <span>{message.text}</span>
-              <button 
+              <button
                 onClick={() => setMessage({ type: "", text: "" })}
                 className="text-current hover:opacity-70"
               >
@@ -374,6 +384,54 @@ const Settings = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Bio
+                    </label>
+                    <textarea
+                      value={profileForm.bio}
+                      onChange={(e) =>
+                        setProfileForm({
+                          ...profileForm,
+                          bio: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                      rows="4"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Website
+                    </label>
+                    <input
+                      type="url"
+                      value={profileForm.website}
+                      onChange={(e) =>
+                        setProfileForm({
+                          ...profileForm,
+                          website: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.location}
+                      onChange={(e) =>
+                        setProfileForm({
+                          ...profileForm,
+                          location: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Username
                     </label>
                     <input
@@ -385,6 +443,66 @@ const Settings = () => {
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Username cannot be changed
                     </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Twitter
+                    </label>
+                    <input
+                      type="url"
+                      value={profileForm.socialLinks.twitter || ""}
+                      onChange={(e) =>
+                        setProfileForm({
+                          ...profileForm,
+                          socialLinks: {
+                            ...profileForm.socialLinks,
+                            twitter: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                      placeholder="https://x.com/yourusername"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      LinkedIn
+                    </label>
+                    <input
+                      type="url"
+                      value={profileForm.socialLinks.linkedin || ""}
+                      onChange={(e) =>
+                        setProfileForm({
+                          ...profileForm,
+                          socialLinks: {
+                            ...profileForm.socialLinks,
+                            linkedin: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                      placeholder="https://linkedin.com/in/yourusername"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      GitHub
+                    </label>
+                    <input
+                      type="url"
+                      value={profileForm.socialLinks.github || ""}
+                      onChange={(e) =>
+                        setProfileForm({
+                          ...profileForm,
+                          socialLinks: {
+                            ...profileForm.socialLinks,
+                            github: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                      placeholder="https://github.com/yourusername"
+                    />
                   </div>
                 </div>
                 <div className="flex justify-end">
@@ -462,7 +580,7 @@ const Settings = () => {
                       }
                       className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
                       required
-                      minLength={6}
+                      minLength={8}
                     />
                     <button
                       type="button"
@@ -498,7 +616,7 @@ const Settings = () => {
                       }
                       className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
                       required
-                      minLength={6}
+                      minLength={8}
                     />
                     <button
                       type="button"
@@ -548,7 +666,9 @@ const Settings = () => {
                     <div className="flex-shrink-0">
                       <img
                         src={
-                          avatarPreview || user?.avatar || "/default-avatar.png"
+                          avatarPreview ||
+                          user?.avatar?.url ||
+                          "/default-avatar.png"
                         }
                         alt="Avatar"
                         className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
@@ -595,7 +715,7 @@ const Settings = () => {
                       <img
                         src={
                           coverPreview ||
-                          user?.coverImage ||
+                          user?.coverImage?.url ||
                           "/default-cover.jpg"
                         }
                         alt="Cover"
@@ -639,7 +759,7 @@ const Settings = () => {
           {/* Channel Tab */}
           {activeTab === "channel" && (
             <div className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
                 Channel Profile
               </h2>
               {isLoading ? (
@@ -656,21 +776,19 @@ const Settings = () => {
                         </h3>
                         <dl className="mt-4 space-y-2">
                           <div className="flex justify-between">
-                            <dt className="text-gray-600 dark:text-gray-400">Subscribers:</dt>
+                            <dt className="text-gray-600 dark:text-gray-400">
+                              Followers:
+                            </dt>
                             <dd className="font-medium text-gray-900 dark:text-white">
-                              {channelProfile.subscribersCount || 0}
+                              {channelProfile.followersCount || 0}
                             </dd>
                           </div>
                           <div className="flex justify-between">
-                            <dt className="text-gray-600 dark:text-gray-400">Videos:</dt>
+                            <dt className="text-gray-600 dark:text-gray-400">
+                              Following:
+                            </dt>
                             <dd className="font-medium text-gray-900 dark:text-white">
-                              {channelProfile.channelsSubscribedToCount || 0}
-                            </dd>
-                          </div>
-                          <div className="flex justify-between">
-                            <dt className="text-gray-600 dark:text-gray-400">Subscribed To:</dt>
-                            <dd className="font-medium text-gray-900 dark:text-white">
-                              {channelProfile.channelsSubscribedToCount || 0}
+                              {channelProfile.followingCount || 0}
                             </dd>
                           </div>
                         </dl>
@@ -681,19 +799,25 @@ const Settings = () => {
                         </h3>
                         <dl className="mt-4 space-y-2">
                           <div>
-                            <dt className="text-gray-600 dark:text-gray-400">Username:</dt>
+                            <dt className="text-gray-600 dark:text-gray-400">
+                              Username:
+                            </dt>
                             <dd className="font-medium text-gray-900 dark:text-white">
                               @{channelProfile.username}
                             </dd>
                           </div>
                           <div>
-                            <dt className="text-gray-600 dark:text-gray-400">Full Name:</dt>
+                            <dt className="text-gray-600 dark:text-gray-400">
+                              Full Name:
+                            </dt>
                             <dd className="font-medium text-gray-900 dark:text-white">
                               {channelProfile.fullName}
                             </dd>
                           </div>
                           <div>
-                            <dt className="text-gray-600 dark:text-gray-400">Email:</dt>
+                            <dt className="text-gray-600 dark:text-gray-400">
+                              Email:
+                            </dt>
                             <dd className="font-medium text-gray-900 dark:text-white">
                               {channelProfile.email}
                             </dd>
@@ -718,22 +842,22 @@ const Settings = () => {
           {activeTab === "history" && (
             <div className="p-6">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
-                Watch History
+                Read History
               </h2>
               {isLoading ? (
                 <div className="flex justify-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
                 </div>
-              ) : watchHistory.length > 0 ? (
+              ) : readHistory.length > 0 ? (
                 <div className="space-y-4">
-                  {watchHistory.map((item, index) => (
+                  {readHistory.map((item, index) => (
                     <div
                       key={index}
                       className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
                     >
                       <div className="flex-shrink-0">
                         <img
-                          src={item.thumbnail || "/default-video.jpg"}
+                          src={item.thumbnail?.url || "/default-video.jpg"}
                           alt={item.title}
                           className="w-16 h-12 object-cover rounded"
                         />
@@ -743,11 +867,11 @@ const Settings = () => {
                           {item.title}
                         </h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {item.description}
+                          {item.description || "No description available"}
                         </p>
                         <p className="text-xs text-gray-400 dark:text-gray-500">
-                          Watched on{" "}
-                          {new Date(item.watchedAt).toLocaleDateString()}
+                          Read on{" "}
+                          {new Date(item.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
@@ -756,7 +880,9 @@ const Settings = () => {
               ) : (
                 <div className="text-center py-12">
                   <History className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">No watch history available</p>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    No read history available
+                  </p>
                 </div>
               )}
             </div>
@@ -836,7 +962,9 @@ const Settings = () => {
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Email</p>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        Email
+                      </p>
                       <p className="text-sm text-gray-900 dark:text-gray-100">
                         {user?.email || "N/A"}
                       </p>
@@ -880,7 +1008,7 @@ const Settings = () => {
                   <div className="space-y-4">
                     <div>
                       <p className="text-sm text-red-800 dark:text-red-300 mb-2">
-                        Delete your account. You will need to register again.
+                        Delete your account. This action cannot be undone.
                       </p>
                       <button
                         onClick={handleDeleteAccount}
