@@ -13,6 +13,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import AdminPage from "./pages/AdminPage";
 
+import { BlogProvider } from "./contexts/BlogContext";
+
 // Dashboard Layout Pages
 import Settings from "./pages/Settings/Settings";
 
