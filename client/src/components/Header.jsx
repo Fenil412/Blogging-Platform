@@ -69,6 +69,18 @@ const Header = () => {
                 History
               </Link>
               <Link
+                to="/blog/new"
+                className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
+              >
+                Write
+              </Link>
+              <Link
+                to="{`/blogs/edit/${blogId}`}"
+                className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
+              >
+                Edit
+              </Link>
+              <Link
                 to="/settings"
                 className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
               >

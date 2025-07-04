@@ -7,12 +7,14 @@ import mongoose from "mongoose";
 const getAuthorStats = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     
-    // Get basic counts in parallel
-    const [totalBlogs, totalFollowers, totalFollowing] = await Promise.all([
+    // Get counts including published/draft status
+    const [totalBlogs, publishedBlogs, draftBlogs, totalFollowers, totalFollowing] = await Promise.all([
         Blog.countDocuments({ author: userId }),
+        Blog.countDocuments({ author: userId, isPublished: true }),
+        Blog.countDocuments({ author: userId, isPublished: false }),
         Follower.countDocuments({ author: userId }),
         Follower.countDocuments({ follower: userId })
-    ]);
+    ]); 
     
     // Get engagement metrics
     const engagement = await Blog.aggregate([
@@ -58,6 +60,8 @@ const getAuthorStats = asyncHandler(async (req, res) => {
     const stats = {
         overview: {
             totalBlogs,
+            publishedBlogs, // Added
+            draftBlogs,     // Added
             totalFollowers,
             totalFollowing,
             totalViews: engagement[0]?.totalViews || 0,

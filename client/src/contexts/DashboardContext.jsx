@@ -6,8 +6,34 @@ import { useToast } from "../components/ui/use-toast";
 const DashboardContext = createContext();
 
 export function DashboardProvider({ children }) {
-  const [authorStats, setAuthorStats] = useState(null);
-  const [authorBlogs, setAuthorBlogs] = useState([]);
+  const [authorStats, setAuthorStats] = useState({
+    overview: {
+      totalBlogs: 0,
+      publishedBlogs: 0,
+      draftBlogs: 0,
+      totalViews: 0,
+      totalLikes: 0,
+      totalComments: 0,
+      totalFollowers: 0,
+      totalFollowing: 0,
+    },
+    engagement: {
+      avgViewDuration: 0,
+      engagementRate: 0,
+    },
+    topContent: [],
+    audience: {
+      total: 0,
+      locations: [],
+    },
+  });
+  const [authorBlogsData, setAuthorBlogsData] = useState({
+    docs: [],
+    total: 0,
+    page: 1,
+    pages: 1,
+    limit: 10,
+  });
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -17,17 +43,39 @@ export function DashboardProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.get("/api/v1/dashboard/stats");
-      
-      setAuthorStats(response.data.data);
-      return response.data;
+
+      // Handle nested response structure
+      const responseData = response.data.data || response.data;
+
+      // Merge with default structure to ensure all properties exist
+      setAuthorStats((prev) => ({
+        ...prev,
+        overview: {
+          ...prev.overview,
+          ...(responseData.overview || {}),
+        },
+        engagement: {
+          ...prev.engagement,
+          ...(responseData.engagement || {}),
+        },
+        topContent: responseData.topContent || [],
+        audience: {
+          ...prev.audience,
+          ...(responseData.audience || {}),
+        },
+      }));
+
+      return responseData;
     } catch (error) {
-      setError(error.response?.data?.message || "Failed to fetch author stats");
+      const errorMessage =
+        error.response?.data?.message || "Failed to fetch author stats";
+      setError(errorMessage);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.response?.data?.message || "Failed to fetch author stats",
+        description: errorMessage,
       });
       throw error;
     } finally {
@@ -39,13 +87,13 @@ export function DashboardProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      
-      const { 
-        page = 1, 
-        limit = 10, 
-        status, 
-        sortBy = "createdAt", 
-        sortOrder = -1 
+
+      const {
+        page = 1,
+        limit = 10,
+        status,
+        sortBy = "createdAt",
+        sortOrder = -1,
       } = params;
 
       const response = await axios.get("/api/v1/dashboard/blogs", {
@@ -54,18 +102,53 @@ export function DashboardProvider({ children }) {
           limit,
           status,
           sortBy,
-          sortOrder
-        }
+          sortOrder,
+        },
       });
 
-      setAuthorBlogs(response.data.data.docs || []);
+      const responseData = response.data.data || response.data;
+      let blogsData;
+
+      // Handle different response structures
+      if (Array.isArray(responseData)) {
+        // Simple array response
+        blogsData = {
+          docs: responseData,
+          total: responseData.length,
+          page: 1,
+          pages: 1,
+          limit: responseData.length,
+        };
+      } else if (responseData.docs) {
+        // Paginated response
+        blogsData = {
+          docs: responseData.docs,
+          total: responseData.total,
+          page: responseData.page,
+          pages: responseData.pages,
+          limit: responseData.limit,
+        };
+      } else {
+        // Fallback to empty
+        blogsData = {
+          docs: [],
+          total: 0,
+          page: 1,
+          pages: 1,
+          limit: 10,
+        };
+      }
+
+      setAuthorBlogsData(blogsData);
       return response.data;
     } catch (error) {
-      setError(error.response?.data?.message || "Failed to fetch author blogs");
+      const errorMessage =
+        error.response?.data?.message || "Failed to fetch author blogs";
+      setError(errorMessage);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.response?.data?.message || "Failed to fetch author blogs",
+        description: errorMessage,
       });
       throw error;
     } finally {
@@ -77,19 +160,23 @@ export function DashboardProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.get("/api/v1/dashboard/analytics", {
-        params: { period }
+        params: { period },
       });
-      
-      setAnalytics(response.data.data);
-      return response.data;
+
+      // More flexible response handling
+      const responseData = response.data.data || response.data;
+      setAnalytics(responseData);
+      return responseData;
     } catch (error) {
-      setError(error.response?.data?.message || "Failed to fetch analytics");
+      const errorMessage =
+        error.response?.data?.message || "Failed to fetch analytics";
+      setError(errorMessage);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.response?.data?.message || "Failed to fetch analytics",
+        description: errorMessage,
       });
       throw error;
     } finally {
@@ -99,13 +186,13 @@ export function DashboardProvider({ children }) {
 
   const value = {
     authorStats,
-    authorBlogs,
+    authorBlogsData,
     analytics,
     loading,
     error,
     getAuthorStats,
     getAuthorBlogs,
-    getAnalytics
+    getAnalytics,
   };
 
   return (

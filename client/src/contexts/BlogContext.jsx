@@ -16,14 +16,14 @@ export function BlogProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      
-      const { 
-        page = 1, 
-        limit = 10, 
-        query, 
-        sortBy = "createdAt", 
-        sortType = "desc", 
-        userId 
+
+      const {
+        page = 1,
+        limit = 10,
+        query,
+        sortBy = "createdAt",
+        sortType = "desc",
+        userId,
       } = params;
 
       const response = await axios.get("/api/v1/blogs", {
@@ -33,11 +33,25 @@ export function BlogProvider({ children }) {
           query,
           sortBy,
           sortType,
-          userId
-        }
+          userId,
+        },
       });
 
-      setBlogs(response.data.data);
+      // Handle different response structures
+      const responseData = response.data.data;
+      let blogsArray = [];
+
+      if (Array.isArray(responseData)) {
+        blogsArray = responseData;
+      } else if (responseData.blogs) {
+        blogsArray = responseData.blogs;
+      } else if (responseData.docs) {
+        blogsArray = responseData.docs;
+      } else {
+        blogsArray = [];
+      }
+
+      setBlogs(blogsArray);
       return response.data;
     } catch (error) {
       setError(error.response?.data?.message || "Failed to fetch blogs");
@@ -56,7 +70,7 @@ export function BlogProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.get(`/api/v1/blogs/${blogId}`);
       setCurrentBlog(response.data.data);
       return response.data;
@@ -77,7 +91,7 @@ export function BlogProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.post("/api/v1/blogs", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -107,7 +121,7 @@ export function BlogProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.patch(`/api/v1/blogs/${blogId}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -142,9 +156,12 @@ export function BlogProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.delete(`/api/v1/blogs/${blogId}`);
-      
+
+      // Update blogs list
+      setBlogs((prev) => prev.filter((blog) => blog._id !== blogId));
+
       // Clear current blog if it's the one being deleted
       if (currentBlog?._id === blogId) {
         setCurrentBlog(null);
@@ -173,16 +190,36 @@ export function BlogProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await axios.patch(`/api/v1/blogs/toggle/publish/${blogId}`);
-      
+
+      const response = await axios.patch(
+        `/api/v1/blogs/toggle/publish/${blogId}`
+      );
+
+      // Update blogs list
+      setBlogs((prev) =>
+        prev.map((blog) =>
+          blog._id === blogId
+            ? { ...blog, isPublished: !blog.isPublished }
+            : blog
+        )
+      );
+
       // Update current blog if it's the one being toggled
       if (currentBlog?._id === blogId) {
-        setCurrentBlog(prev => ({
+        setCurrentBlog((prev) => ({
           ...prev,
-          isPublished: !prev.isPublished
+          isPublished: !prev.isPublished,
         }));
       }
+
+      // Update blogs list
+      setBlogs((prev) =>
+        prev.map((blog) =>
+          blog._id === blogId
+            ? { ...blog, isPublished: !blog.isPublished }
+            : blog
+        )
+      );
 
       toast({
         variant: "success",
@@ -191,11 +228,11 @@ export function BlogProvider({ children }) {
       });
       return response.data;
     } catch (error) {
-      setError(error.response?.data?.message || "Failed to update status");
+      setError(error.response?.data?.message || "Failed to publish blog");
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.response?.data?.message || "Failed to update status",
+        description: error.response?.data?.message || "Failed to publish blog",
       });
       throw error;
     } finally {
@@ -214,14 +251,10 @@ export function BlogProvider({ children }) {
     updateBlog,
     deleteBlog,
     togglePublishStatus,
-    setCurrentBlog
+    setCurrentBlog,
   };
 
-  return (
-    <BlogContext.Provider value={value}>
-      {children}
-    </BlogContext.Provider>
-  );
+  return <BlogContext.Provider value={value}>{children}</BlogContext.Provider>;
 }
 
 export function useBlog() {
