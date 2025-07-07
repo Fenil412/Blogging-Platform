@@ -51,18 +51,6 @@ const Header = () => {
                 Dashboard
               </Link>
               <Link
-                to="/upload"
-                className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
-              >
-                Upload
-              </Link>
-              <Link
-                to="/analytics"
-                className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
-              >
-                Analytics
-              </Link>
-              <Link
                 to="/history"
                 className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
               >
@@ -73,12 +61,6 @@ const Header = () => {
                 className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
               >
                 Write
-              </Link>
-              <Link
-                to="{`/blogs/edit/${blogId}`}"
-                className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
-              >
-                Edit
               </Link>
               <Link
                 to="/settings"

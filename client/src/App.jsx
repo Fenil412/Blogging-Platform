@@ -16,6 +16,7 @@ import AdminPage from "./pages/AdminPage";
 
 import { BlogProvider } from "./contexts/BlogContext";
 import { DashboardProvider } from "./contexts/DashboardContext";
+import { AdminProvider } from "./contexts/AdminContext";
 
 // Dashboard Layout Pages
 import Settings from "./pages/Settings/Settings";
@@ -76,7 +77,9 @@ function App() {
           path="/admin"
           element={
             <AdminRoute>
+              <AdminProvider>
               <AdminPage />
+              </AdminProvider>
             </AdminRoute>
           }
         />

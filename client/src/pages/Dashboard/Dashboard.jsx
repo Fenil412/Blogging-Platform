@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDashboard } from "../../contexts/DashboardContext";
 import { useBlog } from "../../contexts/BlogContext";
 import { useToast } from "../../components/ui/use-toast";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -14,6 +14,8 @@ const Dashboard = () => {
     loading: dashboardLoading,
     getAuthorStats,
     getAuthorBlogs,
+    analytics,
+    getAnalytics,
   } = useDashboard();
 
   const { deleteBlog, togglePublishStatus, loading: blogLoading } = useBlog();
@@ -23,6 +25,12 @@ const Dashboard = () => {
   const [statusFilter, setStatusFilter] = useState("all");
 
   const loading = dashboardLoading || blogLoading;
+  const [analyticsPeriod, setAnalyticsPeriod] = useState("30d");
+
+  useEffect(() => {
+    // ... existing useEffect ...
+    getAnalytics(analyticsPeriod);
+  }, [analyticsPeriod]);
 
   useEffect(() => {
     getAuthorStats();
@@ -147,6 +155,98 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Analytics Section */}
+      <div className="bg-white rounded-lg shadow mb-8">
+        <div className="flex justify-between items-center p-6 border-b">
+          <h2 className="text-xl font-semibold">Analytics</h2>
+          <select
+            value={analyticsPeriod}
+            onChange={(e) => setAnalyticsPeriod(e.target.value)}
+            className="border rounded px-3 py-2"
+          >
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="90d">Last 90 Days</option>
+          </select>
+        </div>
+
+        <div className="p-6">
+          {loading && !analytics ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              <p className="mt-4 text-gray-600">Loading analytics...</p>
+            </div>
+          ) : analytics ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="border rounded-lg p-4">
+                <h3 className="font-medium mb-4">Traffic Overview</h3>
+                <div className="space-y-4">
+                  {analytics.views && (
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span>Views</span>
+                        <span className="font-medium">
+                          {analytics.views.total}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full"
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              analytics.views.total / 100
+                            )}%`,
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {analytics.engagement && (
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span>Engagement Rate</span>
+                        <span className="font-medium">
+                          {analytics.engagement.rate?.toFixed(1) || 0}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-green-600 h-2 rounded-full"
+                          style={{
+                            width: `${analytics.engagement.rate || 0}%`,
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="border rounded-lg p-4">
+                <h3 className="font-medium mb-4">Top Content</h3>
+                <ul className="space-y-3">
+                  {analytics.topContent?.slice(0, 5).map((item, index) => (
+                    <li
+                      key={index}
+                      className="flex justify-between items-center"
+                    >
+                      <span className="truncate max-w-[70%]">{item.title}</span>
+                      <span className="font-medium">{item.views} views</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No analytics data available</p>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Blogs Section */}
       <div className="bg-white rounded-lg shadow overflow-hidden mb-8">
         <div className="flex justify-between items-center p-6 border-b">
@@ -180,11 +280,12 @@ const Dashboard = () => {
           ) : authorBlogsData.docs.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {authorBlogsData.docs.map((blog) => {
-                const createdAt = format(new Date(blog.createdAt), "MMM d");
+                const createdAt = format(
+                  new Date(blog.createdAt),
+                  "MMM d, yyyy"
+                );
                 const updatedAt = blog.updatedAt
-                  ? formatDistanceToNow(new Date(blog.updatedAt), {
-                      addSuffix: true,
-                    })
+                  ? format(new Date(blog.updatedAt), "MMM d, yyyy")
                   : null;
 
                 return (
@@ -205,21 +306,27 @@ const Dashboard = () => {
                               src={blog.thumbnail}
                               alt={blog.title}
                               className="w-16 h-16 object-cover rounded-lg"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.style.display = "none";
+                              }}
                             />
                           </div>
                         )}
                       </div>
 
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-3 min-h-[3rem]">
                         {blog.description || "No description available"}
                       </p>
 
                       <div className="flex justify-between text-xs text-gray-500 mb-4">
                         <div>
-                          <span className="font-medium">{createdAt}</span>
-                          {updatedAt && (
-                            <span className="ml-2 text-gray-400 text-xs">
-                              Updated {updatedAt}
+                          <span className="font-medium">
+                            Created: {createdAt}
+                          </span>
+                          {updatedAt && updatedAt !== createdAt && (
+                            <span className="ml-2 block sm:inline-block mt-1 sm:mt-0">
+                              Updated: {updatedAt}
                             </span>
                           )}
                         </div>
@@ -280,7 +387,7 @@ const Dashboard = () => {
 
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => navigate(`/blog/edit/${blog._id}`)}
+                            onClick={() => navigate(`/blogs/edit/${blog._id}`)}
                             className="text-blue-600 hover:text-blue-800 text-sm"
                           >
                             Edit

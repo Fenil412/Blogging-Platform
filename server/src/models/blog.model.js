@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import mongoosePaginate from "mongoose-paginate-v2";
+import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const blogSchema = new Schema(
     {
@@ -64,5 +65,5 @@ blogSchema.pre("save", function (next) {
 });
 
 blogSchema.plugin(mongoosePaginate);
-
+blogSchema.plugin(aggregatePaginate);
 export const Blog = mongoose.model("Blog", blogSchema);

@@ -1,5 +1,5 @@
 // BlogContext.jsx
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useCallback } from "react";
 import axios from "axios";
 import { useToast } from "../components/ui/use-toast";
 
@@ -12,33 +12,29 @@ export function BlogProvider({ children }) {
   const [error, setError] = useState(null);
   const { toast } = useToast();
 
-  const getAllBlogs = async (params = {}) => {
+  const getAllBlogs = useCallback(async (params = {}) => {
     try {
       setLoading(true);
       setError(null);
 
-      const {
-        page = 1,
-        limit = 10,
-        query,
-        sortBy = "createdAt",
-        sortType = "desc",
-        userId,
-      } = params;
+      // Only include parameters that have values
+      const filteredParams = Object.entries(params).reduce(
+        (acc, [key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            acc[key] = value;
+          }
+          return acc;
+        }, 
+        {}
+      );
 
       const response = await axios.get("/api/v1/blogs", {
-        params: {
-          page,
-          limit,
-          query,
-          sortBy,
-          sortType,
-          userId,
-        },
+        params: filteredParams,
+        timeout: 10000 // Add timeout to prevent hanging requests
       });
 
       // Handle different response structures
-      const responseData = response.data.data;
+      const responseData = response.data.data || response.data;
       let blogsArray = [];
 
       if (Array.isArray(responseData)) {
@@ -54,17 +50,33 @@ export function BlogProvider({ children }) {
       setBlogs(blogsArray);
       return response.data;
     } catch (error) {
-      setError(error.response?.data?.message || "Failed to fetch blogs");
+      // Handle different error scenarios
+      let errorMessage = "Failed to fetch blogs";
+      
+      if (error.response) {
+        // Server responded with a status code outside 2xx
+        errorMessage = error.response.data?.message || error.response.statusText || errorMessage;
+      } else if (error.request) {
+        // Request was made but no response received
+        errorMessage = "No response received from server";
+      } else {
+        // Something happened in setting up the request
+        errorMessage = error.message;
+      }
+
+      setError(errorMessage);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.response?.data?.message || "Failed to fetch blogs",
+        description: errorMessage,
       });
-      throw error;
+      
+      // Return empty array to prevent crashes in components
+      return { data: [] };
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);  
 
   const getBlogById = async (blogId) => {
     try {
@@ -187,46 +199,37 @@ export function BlogProvider({ children }) {
   };
 
   const togglePublishStatus = async (blogId) => {
-    try {
-      setLoading(true);
-      setError(null);
+  try {
+    setLoading(true);
+    setError(null);
 
-      const response = await axios.patch(
-        `/api/v1/blogs/toggle/publish/${blogId}`
-      );
+    const response = await axios.patch(
+      `/api/v1/blogs/toggle/publish/${blogId}`
+    );
 
-      // Update blogs list
-      setBlogs((prev) =>
-        prev.map((blog) =>
-          blog._id === blogId
-            ? { ...blog, isPublished: !blog.isPublished }
-            : blog
-        )
-      );
+    // Update blogs list - REMOVED DUPLICATE SETBLOGS CALL
+    setBlogs((prev) =>
+      prev.map((blog) =>
+        blog._id === blogId
+          ? { ...blog, isPublished: !blog.isPublished }
+          : blog
+      )
+    );
 
-      // Update current blog if it's the one being toggled
-      if (currentBlog?._id === blogId) {
-        setCurrentBlog((prev) => ({
-          ...prev,
-          isPublished: !prev.isPublished,
-        }));
-      }
+    // Update current blog if it's the one being toggled
+    if (currentBlog?._id === blogId) {
+      setCurrentBlog((prev) => ({
+        ...prev,
+        isPublished: !prev.isPublished,
+      }));
+    }
 
-      // Update blogs list
-      setBlogs((prev) =>
-        prev.map((blog) =>
-          blog._id === blogId
-            ? { ...blog, isPublished: !blog.isPublished }
-            : blog
-        )
-      );
-
-      toast({
-        variant: "success",
-        title: "Success",
-        description: response.data.message || "Publish status updated",
-      });
-      return response.data;
+    toast({
+      variant: "success",
+      title: "Success",
+      description: response.data.message || "Publish status updated",
+    });
+    return response.data;
     } catch (error) {
       setError(error.response?.data?.message || "Failed to publish blog");
       toast({
