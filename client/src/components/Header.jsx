@@ -1,36 +1,32 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import { useTheme } from "../contexts/ThemeContext";
-import { Moon, Sun, Menu, X } from "lucide-react";
-import logo from "../../photos/BloggingLogo.jpg";
+"use client"
+
+import { useState } from "react"
+import { Link } from "react-router-dom"
+import { useAuth } from "../contexts/AuthContext"
+import { useTheme } from "../contexts/ThemeContext"
+import { Moon, Sun, Menu, X, BookmarkIcon, Users } from "lucide-react"
+import logo from "../../photos/BloggingLogo.jpg"
 
 const Header = () => {
-  const { isAuthenticated, isAdmin, user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isAuthenticated, isAdmin, user, logout } = useAuth()
+  const { theme, toggleTheme } = useTheme()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+    setIsMenuOpen(!isMenuOpen)
+  }
 
-  const buttonBase =
-    "px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200";
-  const buttonGhost = `${buttonBase} bg-transparent hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:text-white dark:hover:text-red-500`;
-  const buttonSolid = `${buttonBase} bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600`;
-  const buttonIcon =
-    "p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200";
+  const buttonBase = "px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+  const buttonGhost = `${buttonBase} bg-transparent hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:text-white dark:hover:text-red-500`
+  const buttonSolid = `${buttonBase} bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600`
+  const buttonIcon = "p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
 
   return (
     <header className="border-t border-gray-400 bg-white dark:border-gray-500 dark:bg-gray-800 transition-colors duration-200">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center">
-            <img
-              src={logo}
-              className="h-14 mt-1 sm:h-13 mr-2 sm:mr-3 dark:invert"
-              alt="Logo"
-            />
+            <img src={logo || "/placeholder.svg"} className="h-14 mt-1 sm:h-13 mr-2 sm:mr-3 dark:invert" alt="Logo" />
           </Link>
         </div>
 
@@ -42,8 +38,21 @@ const Header = () => {
           >
             Home
           </Link>
+          <Link
+            to="/blogs"
+            className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
+          >
+            Explore Blogs
+          </Link>
           {isAuthenticated ? (
             <>
+              <Link
+                to="/feed"
+                className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200 flex items-center gap-1"
+              >
+                <Users className="w-4 h-4" />
+                Feed
+              </Link>
               <Link
                 to="/dashboard"
                 className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
@@ -51,16 +60,23 @@ const Header = () => {
                 Dashboard
               </Link>
               <Link
-                to="/history"
-                className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
-              >
-                History
-              </Link>
-              <Link
                 to="/blog/new"
                 className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
               >
                 Write
+              </Link>
+              <Link
+                to="/playlists"
+                className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200 flex items-center gap-1"
+              >
+                <BookmarkIcon className="w-4 h-4" />
+                Playlists
+              </Link>
+              <Link
+                to={`/profile/${user?._id}`}
+                className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
+              >
+                Profile
               </Link>
               <Link
                 to="/settings"
@@ -79,9 +95,7 @@ const Header = () => {
               <button className={buttonGhost} onClick={logout}>
                 Logout
               </button>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                Hi, {user?.username || "User"}
-              </span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Hi, {user?.username || "User"}</span>
             </>
           ) : (
             <>
@@ -96,11 +110,7 @@ const Header = () => {
               </Link>
             </>
           )}
-          <button
-            className={buttonIcon}
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-          >
+          <button className={buttonIcon} onClick={toggleTheme} aria-label="Toggle theme">
             {theme === "dark" ? (
               <Sun className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             ) : (
@@ -111,22 +121,14 @@ const Header = () => {
 
         {/* Mobile Menu Button */}
         <div className="flex items-center gap-2 md:hidden">
-          <button
-            className={buttonIcon}
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-          >
+          <button className={buttonIcon} onClick={toggleTheme} aria-label="Toggle theme">
             {theme === "dark" ? (
               <Sun className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             ) : (
               <Moon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             )}
           </button>
-          <button
-            className={buttonIcon}
-            onClick={toggleMenu}
-            aria-label="Toggle menu"
-          >
+          <button className={buttonIcon} onClick={toggleMenu} aria-label="Toggle menu">
             {isMenuOpen ? (
               <X className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             ) : (
@@ -147,8 +149,23 @@ const Header = () => {
             >
               Home
             </Link>
+            <Link
+              to="/blogs"
+              className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
+              onClick={toggleMenu}
+            >
+              Explore Blogs
+            </Link>
             {isAuthenticated ? (
               <>
+                <Link
+                  to="/feed"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200 flex items-center gap-1"
+                  onClick={toggleMenu}
+                >
+                  <Users className="w-4 h-4" />
+                  Feed
+                </Link>
                 <Link
                   to="/dashboard"
                   className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
@@ -157,18 +174,26 @@ const Header = () => {
                   Dashboard
                 </Link>
                 <Link
-                  to="/upload"
+                  to="/blog/new"
                   className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
                   onClick={toggleMenu}
                 >
-                  Upload
+                  Write
                 </Link>
                 <Link
-                  to="/analytics"
+                  to="/playlists"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200 flex items-center gap-1"
+                  onClick={toggleMenu}
+                >
+                  <BookmarkIcon className="w-4 h-4" />
+                  Playlists
+                </Link>
+                <Link
+                  to={`/profile/${user?._id}`}
                   className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
                   onClick={toggleMenu}
                 >
-                  Analytics
+                  Profile
                 </Link>
                 <Link
                   to="/settings"
@@ -189,8 +214,8 @@ const Header = () => {
                 <button
                   className={buttonGhost}
                   onClick={() => {
-                    logout();
-                    toggleMenu();
+                    logout()
+                    toggleMenu()
                   }}
                 >
                   Logout
@@ -217,7 +242,7 @@ const Header = () => {
         </div>
       )}
     </header>
-  );
-};
+  )
+}
 
-export default Header;
+export default Header
