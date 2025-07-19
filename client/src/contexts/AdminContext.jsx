@@ -20,7 +20,7 @@ export function AdminProvider({ children }) {
 
       const { page = 1, limit = 20, role, status, search } = params
 
-      const response = await axios.get("/api/v1/admin/users", {
+      const response = await axios.get("${import.meta.env.VITE_API_URL}/api/v1/admin/users", {
         params: {
           page,
           limit,
@@ -50,7 +50,7 @@ export function AdminProvider({ children }) {
       setLoading(true)
       setError(null)
 
-      const response = await axios.get(`/api/v1/admin/users/${userId}`)
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/admin/users/${userId}`)
 
       setUserDetails(response.data.data)
       return response.data
@@ -72,7 +72,7 @@ export function AdminProvider({ children }) {
       setLoading(true)
       setError(null)
 
-      const response = await axios.put(`/api/v1/admin/users/${userId}`, updateData)
+      const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/v1/admin/users/${userId}`, updateData)
 
       // Update in users list if exists
       setUsers((prev) =>
@@ -110,7 +110,7 @@ export function AdminProvider({ children }) {
       setLoading(true)
       setError(null)
 
-      const response = await axios.patch(`/api/v1/admin/users/${userId}/status`)
+      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/api/v1/admin/users/${userId}/status`)
 
       // Update in users list
       setUsers((prev) =>
@@ -148,7 +148,7 @@ export function AdminProvider({ children }) {
       setLoading(true)
       setError(null)
 
-      const response = await axios.delete(`/api/v1/admin/users/${userId}`)
+      const response = await axios.delete(`${import.meta.env.VITE_API_URL}/api/v1/admin/users/${userId}`)
 
       // Remove from users list
       setUsers((prev) => prev.filter((user) => user._id !== userId))
@@ -182,7 +182,7 @@ export function AdminProvider({ children }) {
       setLoading(true)
       setError(null)
 
-      const response = await axios.get("/api/v1/admin/stats")
+      const response = await axios.get("${import.meta.env.VITE_API_URL}/api/v1/admin/stats")
 
       setPlatformStats(response.data.data)
       return response.data
@@ -204,7 +204,7 @@ export function AdminProvider({ children }) {
       setLoading(true)
       setError(null)
 
-      const response = await axios.get("/api/v1/admin/activity")
+      const response = await axios.get("${import.meta.env.VITE_API_URL}/api/v1/admin/activity")
 
       setRecentActivity(response.data.data)
       return response.data
@@ -226,7 +226,7 @@ export function AdminProvider({ children }) {
       setLoading(true)
       setError(null)
 
-      const response = await axios.get("/api/v1/admin/users", {
+      const response = await axios.get("${import.meta.env.VITE_API_URL}/api/v1/admin/users", {
         params: {
           search: searchQuery,
           page,

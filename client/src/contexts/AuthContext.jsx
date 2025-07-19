@@ -5,7 +5,7 @@ import { useToast } from "../components/ui/use-toast";
 
 // Configure axios defaults
 axios.defaults.baseURL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+  import.meta.env.VITE_API_BASE_URL || "https://blogging-platform-x0sp.onrender.com/";
 axios.defaults.withCredentials = true; // Important for cookies
 axios.defaults.timeout = 10000;
 
