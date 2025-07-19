@@ -1,6 +1,9 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Calendar, User, Heart, MessageCircle, Eye } from "lucide-react"
+import { useLike } from "../contexts/LikeContext"
 import axios from "axios"
 
 const PublicBlogList = () => {
@@ -11,9 +14,20 @@ const PublicBlogList = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
 
+  const { likeStatus, toggleBlogLike, checkLikeStatus, loading: likeLoading } = useLike()
+
   useEffect(() => {
     fetchPublicBlogs()
   }, [currentPage, searchTerm, selectedCategory])
+
+  // Check like status for blogs when they load
+  useEffect(() => {
+    if (blogs.length > 0) {
+      blogs.forEach((blog) => {
+        checkLikeStatus(blog._id, "blog")
+      })
+    }
+  }, [blogs])
 
   const fetchPublicBlogs = async () => {
     try {
@@ -33,6 +47,11 @@ const PublicBlogList = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleLike = async (blogId, e) => {
+    e.preventDefault() // Prevent navigation when clicking like button
+    await toggleBlogLike(blogId)
   }
 
   const formatDate = (dateString) => {
@@ -93,7 +112,10 @@ const PublicBlogList = () => {
       {/* Blog Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {blogs.map((blog) => (
-          <div key={blog._id} className="bg-white rounded-lg shadow-md border border-gray-200 group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+          <div
+            key={blog._id}
+            className="bg-white rounded-lg shadow-md border border-gray-200 group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+          >
             <div className="relative overflow-hidden rounded-t-lg">
               <img
                 src={blog.thumbnail || "/placeholder.svg?height=200&width=400"}
@@ -131,10 +153,16 @@ const PublicBlogList = () => {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <div className="flex items-center gap-1 hover:text-red-500 transition-colors duration-200">
-                    <Heart className="w-4 h-4" />
+                  <button
+                    onClick={(e) => handleLike(blog._id, e)}
+                    disabled={likeLoading}
+                    className={`flex items-center gap-1 hover:text-red-500 transition-colors duration-200 disabled:opacity-50 ${
+                      likeStatus[blog._id] ? "text-red-500" : ""
+                    }`}
+                  >
+                    <Heart className={`w-4 h-4 ${likeStatus[blog._id] ? "fill-current" : ""}`} />
                     <span>{blog.likesCount || 0}</span>
-                  </div>
+                  </button>
                   <div className="flex items-center gap-1 hover:text-blue-500 transition-colors duration-200">
                     <MessageCircle className="w-4 h-4" />
                     <span>{blog.commentCount || 0}</span>
@@ -145,7 +173,7 @@ const PublicBlogList = () => {
                   </div>
                 </div>
 
-                <Link 
+                <Link
                   to={`/blog/${blog.slug || blog._id}`}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
                 >

@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { MessageCircle, Heart, Reply, Edit, Trash2, Send } from "lucide-react"
 import { useAuth } from "../contexts/AuthContext"
@@ -17,7 +19,7 @@ const CommentSection = ({ blogId }) => {
     getReplies,
     addReply,
   } = useComment()
-  const { toggleCommentLike, checkLikeStatus, likeStatus } = useLike()
+  const { toggleCommentLike, checkLikeStatus, likeStatus, loading: likeLoading } = useLike()
 
   const [newComment, setNewComment] = useState("")
   const [replyingTo, setReplyingTo] = useState(null)
@@ -31,6 +33,15 @@ const CommentSection = ({ blogId }) => {
       getBlogComments(blogId)
     }
   }, [blogId])
+
+  // Check like status for comments when they load
+  useEffect(() => {
+    if (comments.length > 0) {
+      comments.forEach((comment) => {
+        checkLikeStatus(comment._id, "comment")
+      })
+    }
+  }, [comments])
 
   const handleAddComment = async (e) => {
     e.preventDefault()
@@ -79,7 +90,10 @@ const CommentSection = ({ blogId }) => {
   }
 
   const handleLikeComment = async (commentId) => {
-    if (!user) return
+    if (!user) {
+      alert("Please sign in to like comments")
+      return
+    }
     await toggleCommentLike(commentId)
   }
 
@@ -153,7 +167,8 @@ const CommentSection = ({ blogId }) => {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => handleLikeComment(comment._id)}
-                  className={`inline-flex items-center text-sm font-medium px-2 py-1 rounded-md hover:bg-gray-100 transition-colors ${
+                  disabled={likeLoading}
+                  className={`inline-flex items-center text-sm font-medium px-2 py-1 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50 ${
                     likeStatus[comment._id] ? "text-red-600" : "text-gray-500"
                   }`}
                 >

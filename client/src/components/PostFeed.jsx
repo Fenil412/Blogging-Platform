@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { Heart, MessageCircle, Share2, MoreHorizontal, Edit, Trash2 } from "lucide-react"
 import { useAuth } from "../contexts/AuthContext"
@@ -8,7 +10,7 @@ import { useFollower } from "../contexts/FollowerContext"
 const PostFeed = () => {
   const { user } = useAuth()
   const { feed, loading, getFeed, updatePost, deletePost } = usePost()
-  const { toggleBlogLike, likeStatus } = useLike()
+  const { toggleBlogLike, likeStatus, loading: likeLoading, error: likeError, checkLikeStatus } = useLike()
   const { toggleFollow, followStatus } = useFollower()
 
   const [editingPost, setEditingPost] = useState(null)
@@ -19,8 +21,21 @@ const PostFeed = () => {
     getFeed()
   }, [])
 
+  // Check like status for posts when feed loads
+  useEffect(() => {
+    if (feed.length > 0 && user) {
+      feed.forEach((post) => {
+        checkLikeStatus(post._id, "blog")
+      })
+    }
+  }, [feed, user])
+
   const handleLike = async (postId) => {
-    if (!user) return
+    if (!user) {
+      alert("Please sign in to like posts")
+      return
+    }
+
     await toggleBlogLike(postId)
   }
 
@@ -115,8 +130,20 @@ const PostFeed = () => {
 
   return (
     <div className="space-y-6">
+      {/* Error Display */}
+      {likeError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-800 text-sm">
+            <strong>Like Error:</strong> {likeError}
+          </p>
+        </div>
+      )}
+
       {feed.map((post) => (
-        <div key={post._id} className="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300">
+        <div
+          key={post._id}
+          className="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300"
+        >
           <div className="p-6 pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -127,8 +154,8 @@ const PostFeed = () => {
                     alt={post.owner?.name}
                     className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
                     onError={(e) => {
-                      e.target.style.display = 'none'
-                      e.target.nextSibling.style.display = 'flex'
+                      e.target.style.display = "none"
+                      e.target.nextSibling.style.display = "flex"
                     }}
                   />
                   <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-semibold text-sm hidden">
@@ -166,13 +193,10 @@ const PostFeed = () => {
                   >
                     <MoreHorizontal className="w-4 h-4" />
                   </button>
-                  
+
                   {openDropdown === post._id && (
                     <>
-                      <div 
-                        className="fixed inset-0 z-10" 
-                        onClick={() => setOpenDropdown(null)}
-                      ></div>
+                      <div className="fixed inset-0 z-10" onClick={() => setOpenDropdown(null)}></div>
                       <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-20">
                         <button
                           onClick={() => handleEdit(post)}
@@ -232,8 +256,8 @@ const PostFeed = () => {
                   {extractHashtags(post.content).length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {extractHashtags(post.content).map((hashtag, index) => (
-                        <span 
-                          key={index} 
+                        <span
+                          key={index}
                           className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors duration-200"
                         >
                           {hashtag}
@@ -247,11 +271,7 @@ const PostFeed = () => {
                 {post.media && (
                   <div className="mb-4">
                     {post.media.includes("video") ? (
-                      <video 
-                        src={post.media} 
-                        controls 
-                        className="w-full max-h-96 rounded-lg shadow-sm" 
-                      />
+                      <video src={post.media} controls className="w-full max-h-96 rounded-lg shadow-sm" />
                     ) : (
                       <img
                         src={post.media || "/placeholder.svg"}
@@ -267,7 +287,8 @@ const PostFeed = () => {
                   <div className="flex items-center gap-4">
                     <button
                       onClick={() => handleLike(post._id)}
-                      className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      disabled={likeLoading}
+                      className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 disabled:opacity-50 ${
                         likeStatus[post._id]
                           ? "text-red-600 bg-red-50 hover:bg-red-100"
                           : "text-gray-500 hover:text-red-600 hover:bg-red-50"
@@ -282,7 +303,7 @@ const PostFeed = () => {
                       {post.commentCount || 0}
                     </button>
 
-                    <button 
+                    <button
                       onClick={() => handleShare(post)}
                       className="flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
                     >
